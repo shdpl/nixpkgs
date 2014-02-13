@@ -113,16 +113,18 @@ rec {
       getSubOptions = prefix: elemType.getSubOptions (prefix ++ ["*"]);
     };
 
-    attrsOf = elemType: mkOptionType {
-      name = "attribute set of ${elemType.name}s";
-      check = x: isAttrs x && all elemType.check (attrValues x);
+    dependentAttrsOf = elemTypeFn: mkOptionType {
+      name = "attribute set of ${(elemTypeFn "<name>").name}s";
+      check = x: isAttrs x && all (name: (elemTypeFn name).check (getAttr name x)) (attrNames x);
       merge = loc: defs:
-        zipAttrsWith (name: elemType.merge (loc ++ [name]))
+        zipAttrsWith (name: (elemTypeFn name).merge (loc ++ [name]))
           # Push down position info.
           (map (def: listToAttrs (mapAttrsToList (n: def':
             { name = n; value = { inherit (def) file; value = def'; }; }) def.value)) defs);
-      getSubOptions = prefix: elemType.getSubOptions (prefix ++ ["<name>"]);
+      getSubOptions = prefix: (elemTypeFn "<name>").getSubOptions (prefix ++ ["<name>"]);
     };
+
+    attrsOf = elemType: dependentAttrsOf (x: elemType);
 
     # List or attribute set of ...
     loaOf = elemType:
