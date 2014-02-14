@@ -7,7 +7,11 @@ with import ./options.nix;
 with import ./trivial.nix;
 with import ./strings.nix;
 
-rec {
+let
+  inherit (import ./modules.nix) mergeDefinitions evalModules;
+
+  innerMerge = loc: type: defs: (mergeDefinitions loc type defs).mergedValue;
+in rec {
 
   isType = type: x: (x._type or "") == type;
   typeOf = x: x._type or "";
@@ -105,19 +109,19 @@ rec {
 
     listOf = elemType: mkOptionType {
       name = "list of ${elemType.name}s";
-      check = value: isList value && all elemType.check value;
+      check = value: isList value;
       merge = loc: defs:
         concatLists (imap (n: def: imap (m: def':
-          elemType.merge (loc ++ ["[${toString n}-${toString m}]"])
+          innerMerge (loc ++ ["[${toString n}-${toString m}]"]) elemType
             [{ inherit (def) file; value = def'; }]) def.value) defs);
       getSubOptions = prefix: elemType.getSubOptions (prefix ++ ["*"]);
     };
 
     dependentAttrsOf = elemTypeFn: mkOptionType {
       name = "attribute set of ${(elemTypeFn "<name>").name}s";
-      check = x: isAttrs x && all (name: (elemTypeFn name).check (getAttr name x)) (attrNames x);
+      check = x: isAttrs x;
       merge = loc: defs:
-        zipAttrsWith (name: (elemTypeFn name).merge (loc ++ [name]))
+        zipAttrsWith (name: innerMerge (loc ++ [name]) (elemTypeFn name))
           # Push down position info.
           (map (def: listToAttrs (mapAttrsToList (n: def':
             { name = n; value = { inherit (def) file; value = def'; }; }) def.value)) defs);
@@ -174,14 +178,13 @@ rec {
       name = "function that evaluates to a(n) ${elemType.name}";
       check = isFunction;
       merge = loc: defs:
-        fnArgs: elemType.merge loc (map (fn: { inherit (fn) file; value = fn.value fnArgs; }) defs);
+        fnArgs: innerMerge loc elemType (map (fn: { inherit (fn) file; value = fn.value fnArgs; }) defs);
       getSubOptions = elemType.getSubOptions;
     };
 
     submoduleWithExtraArgs = opts: extraArgs:
       let
         opts' = toList opts;
-        inherit (import ./modules.nix) evalModules;
       in
       mkOptionType rec {
         name = "submodule";
