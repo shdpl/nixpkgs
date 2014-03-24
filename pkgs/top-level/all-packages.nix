@@ -855,6 +855,8 @@ let
 
   dtach = callPackage ../tools/misc/dtach { };
 
+	dub = callPackage ../development/tools/build-managers/dub { };
+
   duo-unix = callPackage ../tools/security/duo-unix { };
 
   duplicity = callPackage ../tools/backup/duplicity {
