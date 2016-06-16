@@ -21,7 +21,7 @@
 , libiconv, postgresql, v8_3_16_14, clang, sqlite, zlib, imagemagick
 , pkgconfig , ncurses, xapian, gpgme, utillinux, fetchpatch, tzdata, icu, libffi
 , cmake, libssh2, openssl, mysql, darwin, git, perl, gecode_3, curl
-, libmsgpack, qt5Full
+, libmsgpack, qt48
 }:
 
 let
@@ -30,7 +30,7 @@ in
 
 {
   capybara-webkit = attrs: {
-    buildInputs = [ qt5Full ];
+    buildInputs = [ qt48 ];
   };
 
   charlock_holmes = attrs: {
@@ -57,6 +57,12 @@ in
     buildInputs = [ gpgme ];
   };
 
+  hitimes = attrs: {
+    buildInputs =
+      stdenv.lib.optionals stdenv.isDarwin
+        [ darwin.apple_sdk.frameworks.CoreServices ];
+  };
+
   # note that you need version >= v3.16.14.8,
   # otherwise the gem will fail to link to the libv8 binary.
   # see: https://github.com/cowboyd/libv8/pull/161
@@ -76,21 +82,21 @@ in
   ncursesw = attrs: {
     buildInputs = [ ncurses ];
     buildFlags = [
-      "--with-cflags=-I${ncurses}/include"
-      "--with-ldflags=-L${ncurses}/lib"
+      "--with-cflags=-I${ncurses.dev}/include"
+      "--with-ldflags=-L${ncurses.out}/lib"
     ];
   };
 
   nokogiri = attrs: {
     buildFlags = [
       "--use-system-libraries"
-      "--with-zlib-dir=${zlib}"
-      "--with-xml2-lib=${libxml2}/lib"
-      "--with-xml2-include=${libxml2}/include/libxml2"
-      "--with-xslt-lib=${libxslt}/lib"
-      "--with-xslt-include=${libxslt}/include"
-      "--with-exslt-lib=${libxslt}/lib"
-      "--with-exslt-include=${libxslt}/include"
+      "--with-zlib-dir=${zlib.dev}"
+      "--with-xml2-lib=${libxml2.out}/lib"
+      "--with-xml2-include=${libxml2.dev}/include/libxml2"
+      "--with-xslt-lib=${libxslt.out}/lib"
+      "--with-xslt-include=${libxslt.dev}/include"
+      "--with-exslt-lib=${libxslt.out}/lib"
+      "--with-exslt-include=${libxslt.dev}/include"
     ] ++ lib.optional stdenv.isDarwin "--with-iconv-dir=${libiconv}";
   };
 
@@ -109,7 +115,7 @@ in
   };
 
   rmagick = attrs: {
-    buildInputs = [ imagemagick pkgconfig ];
+    buildInputs = [ imagemagick pkgconfig which ];
   };
 
   rugged = attrs: {
@@ -118,8 +124,8 @@ in
 
   sqlite3 = attrs: {
     buildFlags = [
-      "--with-sqlite3-include=${sqlite}/include"
-      "--with-sqlite3-lib=${sqlite}/lib"
+      "--with-sqlite3-include=${sqlite.dev}/include"
+      "--with-sqlite3-lib=${sqlite.out}/lib"
     ];
   };
 
@@ -166,5 +172,15 @@ in
       export XAPIAN_CONFIG=${xapian}/bin/xapian-config
     '';
   };
+
+  # patching shebangs would fail on the templates/Executable file, so we
+  # temporarily remove the executable flag.
+  bundler = attrs:
+    let
+      templates = "${attrs.ruby.gemPath}/gems/${attrs.gemName}-${attrs.version}/lib/bundler/templates/";
+    in {
+      preFixup  = "chmod -x $out/${templates}/Executable";
+      postFixup = "chmod +x $out/${templates}/Executable";
+    };
 }
 

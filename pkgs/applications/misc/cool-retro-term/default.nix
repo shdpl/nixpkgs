@@ -1,5 +1,5 @@
 { stdenv, fetchgit, makeQtWrapper, qtbase, qtquick1, qmltermwidget,
-qtquickcontrols, qtgraphicaleffects }:
+qtquickcontrols, qtgraphicaleffects, qmakeHook }:
 
 stdenv.mkDerivation rec {
   version = "1.0.0";
@@ -8,7 +8,7 @@ stdenv.mkDerivation rec {
   src = fetchgit {
     url = "https://github.com/Swordfish90/cool-retro-term.git";
     rev = "refs/tags/v${version}";
-    sha256 = "042ikarg6n0c09niwrm987pkzi8xjxxdrg2nqvk9pj7lgmmkkfn1";
+    sha256 = "19sf9ppp2xzwfjwmdqgq9pils4yafsz662n1h65sv5aq04c7gmxs";
     fetchSubmodules = false;
   };
 
@@ -17,11 +17,9 @@ stdenv.mkDerivation rec {
   '';
 
   buildInputs = [ qtbase qtquick1 qmltermwidget qtquickcontrols qtgraphicaleffects ];
-  nativeBuildInputs = [ makeQtWrapper ];
+  nativeBuildInputs = [ makeQtWrapper qmakeHook ];
 
-  configurePhase = "qmake PREFIX=$out";
-
-  installPhase = "make -j $NIX_BUILD_CORES INSTALL_ROOT=$out install";
+  installFlags = [ "INSTALL_ROOT=$(out)" ];
 
   preFixup = ''
     mv $out/usr/share $out/share

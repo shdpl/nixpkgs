@@ -1,9 +1,11 @@
-{ stdenv, fetchurl, pkgconfig, xlibsWrapper, glib, cairo, libpng, harfbuzz
-, fontconfig, freetype, libintlOrEmpty, gobjectIntrospection
+{ stdenv, fetchurl, pkgconfig, libXft, cairo, harfbuzz
+, libintlOrEmpty, gobjectIntrospection
 }:
 
+with stdenv.lib;
+
 let
-  ver_maj = "1.38";
+  ver_maj = "1.40";
   ver_min = "1";
 in
 stdenv.mkDerivation rec {
@@ -11,14 +13,14 @@ stdenv.mkDerivation rec {
 
   src = fetchurl {
     url = "mirror://gnome/sources/pango/${ver_maj}/${name}.tar.xz";
-    sha256 = "1dsf45m51i4rcyvh5wlxxrjfhvn5b67d5ckjc6vdcxbddjgmc80k";
+    sha256 = "e27af54172c72b3ac6be53c9a4c67053e16c905e02addcf3a603ceb2005c1a40";
   };
 
-  buildInputs = with stdenv.lib; [ gobjectIntrospection ]
-    ++ optional stdenv.isDarwin fontconfig;
-  nativeBuildInputs = [ pkgconfig ];
+  outputs = [ "dev" "out" "bin" "docdev" ];
 
-  propagatedBuildInputs = [ xlibsWrapper glib cairo libpng fontconfig freetype harfbuzz ] ++ libintlOrEmpty;
+  buildInputs = [ gobjectIntrospection ];
+  nativeBuildInputs = [ pkgconfig ];
+  propagatedBuildInputs = [ cairo harfbuzz libXft ] ++ libintlOrEmpty;
 
   enableParallelBuilding = true;
 
@@ -29,7 +31,7 @@ stdenv.mkDerivation rec {
   # .../bin/sh: line 5: 14823 Abort trap: 6 srcdir=. PANGO_RC_FILE=./pangorc ${dir}$tst
   # FAIL: testiter
 
-  postInstall = "rm -rf $out/share/gtk-doc";
+  configureFlags = optional stdenv.isDarwin "--without-x";
 
   meta = with stdenv.lib; {
     description = "A library for laying out and rendering of text, with an emphasis on internationalization";

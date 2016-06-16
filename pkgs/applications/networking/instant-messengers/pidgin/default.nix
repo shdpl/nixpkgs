@@ -6,11 +6,12 @@
 , openssl ? null
 , gnutls ? null
 , libgcrypt ? null
+, plugins, symlinkJoin
 }:
 
 # FIXME: clean the mess around choosing the SSL library (nss by default)
 
-stdenv.mkDerivation rec {
+let unwrapped = stdenv.mkDerivation rec {
   name = "pidgin-${version}";
   majorVersion = "2";
   version = "${majorVersion}.10.11";
@@ -43,11 +44,11 @@ stdenv.mkDerivation rec {
   patches = [./pidgin-makefile.patch ./add-search-path.patch ];
 
   configureFlags = [
-    "--with-nspr-includes=${nspr}/include/nspr"
-    "--with-nspr-libs=${nspr}/lib"
-    "--with-nss-includes=${nss}/include/nss"
-    "--with-nss-libs=${nss}/lib"
-    "--with-ncurses-headers=${ncurses}/include"
+    "--with-nspr-includes=${nspr.dev}/include/nspr"
+    "--with-nspr-libs=${nspr.out}/lib"
+    "--with-nss-includes=${nss.dev}/include/nss"
+    "--with-nss-libs=${nss.out}/lib"
+    "--with-ncurses-headers=${ncurses.dev}/include"
     "--disable-meanwhile"
     "--disable-nm"
     "--disable-tcl"
@@ -68,4 +69,11 @@ stdenv.mkDerivation rec {
     platforms = platforms.linux;
     maintainers = [ maintainers.vcunat ];
   };
-}
+};
+
+in if plugins == [] then unwrapped
+    else import ./wrapper.nix {
+      inherit stdenv makeWrapper symlinkJoin plugins;
+      pidgin = unwrapped;
+    }
+

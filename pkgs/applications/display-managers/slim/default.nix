@@ -1,5 +1,5 @@
 { stdenv, fetchurl, cmake, pkgconfig, xorg, libjpeg, libpng
-, fontconfig, freetype, pam, dbus_libs, makeWrapper, pkgs }:
+, fontconfig, freetype, pam, dbus_libs, makeWrapper }:
 
 stdenv.mkDerivation rec {
   name = "slim-1.3.6";
@@ -28,7 +28,7 @@ stdenv.mkDerivation rec {
 
   cmakeFlags = [ "-DUSE_PAM=1" ];
 
-  NIX_CFLAGS_COMPILE = "-I${freetype}/include/freetype -std=c++11";
+  NIX_CFLAGS_COMPILE = "-I${freetype.dev}/include/freetype -std=c++11";
 
   enableParallelBuilding = true;
 

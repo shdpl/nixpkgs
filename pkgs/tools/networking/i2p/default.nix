@@ -1,10 +1,10 @@
 { stdenv, procps, coreutils, fetchurl, jdk, jre, ant, gettext, which }:
 
 stdenv.mkDerivation rec {
-  name = "i2p-0.9.24";
+  name = "i2p-0.9.26";
   src = fetchurl {
     url = "https://github.com/i2p/i2p.i2p/archive/${name}.tar.gz";
-    sha256 = "0hk28cigil6ia707zb6p8n7959xg7v816bacxxlln780cc1wi830";
+    sha256 = "0h672w69a5xzgcrls64bpss3ga9hgpnrq90dr5lb5912pwwq9pa1";
   };
   buildInputs = [ jdk ant gettext which ];
   patches = [ ./i2p.patch ];

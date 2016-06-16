@@ -44,7 +44,7 @@ let
        ${cfg.extraGSettingsOverrides}
      EOF
 
-     ${pkgs.glib}/bin/glib-compile-schemas $out/share/gsettings-schemas/nixos-gsettings-overrides/glib-2.0/schemas/
+     ${pkgs.glib.dev}/bin/glib-compile-schemas $out/share/gsettings-schemas/nixos-gsettings-overrides/glib-2.0/schemas/
     '';
   };
 
@@ -78,10 +78,11 @@ in {
         type = types.listOf types.path;
         description = "List of packages for which gsettings are overridden.";
       };
+
+      debug = mkEnableOption "gnome-session debug messages";
     };  
 
     environment.gnome3.packageSet = mkOption {
-      type = types.nullOr types.package;
       default = null;
       example = literalExample "pkgs.gnome3_18";
       description = "Which GNOME 3 package set to use.";
@@ -160,13 +161,15 @@ in {
           # Update user dirs as described in http://freedesktop.org/wiki/Software/xdg-user-dirs/
           ${pkgs.xdg-user-dirs}/bin/xdg-user-dirs-update
 
-          ${gnome3.gnome_session}/bin/gnome-session&
+          ${gnome3.gnome_session}/bin/gnome-session ${optionalString cfg.debug "--debug"} &
           waitPID=$!
         '';
       };
 
+    services.xserver.updateDbusEnvironment = true;
+
     environment.variables.GIO_EXTRA_MODULES = [ "${gnome3.dconf}/lib/gio/modules"
-                                                "${gnome3.glib_networking}/lib/gio/modules"
+                                                "${gnome3.glib_networking.out}/lib/gio/modules"
                                                 "${gnome3.gvfs}/lib/gio/modules" ];
     environment.systemPackages = gnome3.corePackages ++ cfg.sessionPath
       ++ (removePackagesByName gnome3.optionalPackages config.environment.gnome3.excludePackages);

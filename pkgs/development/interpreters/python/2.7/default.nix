@@ -1,4 +1,4 @@
-{ stdenv, fetchurl, self, callPackage
+{ stdenv, fetchurl, self, callPackage, python27Packages
 , bzip2, openssl, gettext
 
 , includeModules ? false
@@ -101,6 +101,11 @@ let
 
   propagatedBuildInputs = optional stdenv.isDarwin configd;
 
+  mkPaths = paths: {
+    C_INCLUDE_PATH = makeSearchPathOutput "dev" "include" paths;
+    LIBRARY_PATH = makeLibraryPath paths;
+  };
+
   # Build the basic Python interpreter without modules that have
   # external dependencies.
   python = stdenv.mkDerivation {
@@ -111,8 +116,7 @@ let
             preConfigure configureFlags;
 
     LDFLAGS = stdenv.lib.optionalString (!stdenv.isDarwin) "-lgcc_s";
-    C_INCLUDE_PATH = concatStringsSep ":" (map (p: "${p}/include") buildInputs);
-    LIBRARY_PATH = concatStringsSep ":" (map (p: "${p}/lib") buildInputs);
+    inherit (mkPaths buildInputs) C_INCLUDE_PATH LIBRARY_PATH;
 
     NIX_CFLAGS_COMPILE = optionalString stdenv.isDarwin "-msse2";
     DETERMINISTIC_BUILD = 1;
@@ -137,7 +141,9 @@ let
 
         paxmark E $out/bin/python${majorVersion}
 
-        ${ optionalString includeModules "$out/bin/python ./setup.py build_ext"}
+        ${optionalString includeModules "$out/bin/python ./setup.py build_ext"}
+
+        rm "$out"/lib/python*/plat-*/regen # refers to glibc.dev
       '';
 
     passthru = rec {
@@ -145,6 +151,7 @@ let
       isPy2 = true;
       isPy27 = true;
       buildEnv = callPackage ../wrapper.nix { python = self; };
+      withPackages = import ../with-packages.nix { inherit buildEnv; pythonPackages = python27Packages; };
       libPrefix = "python${majorVersion}";
       executable = libPrefix;
       sitePackages = "lib/${libPrefix}/site-packages";
@@ -167,7 +174,7 @@ let
       '';
       license = stdenv.lib.licenses.psfl;
       platforms = stdenv.lib.platforms.all;
-      maintainers = with stdenv.lib.maintainers; [ simons chaoflow iElectric ];
+      maintainers = with stdenv.lib.maintainers; [ chaoflow domenkozar ];
     };
   };
 
@@ -186,8 +193,7 @@ let
 
       buildInputs = [ python ] ++ deps;
 
-      C_INCLUDE_PATH = concatStringsSep ":" (map (p: "${p}/include") buildInputs);
-      LIBRARY_PATH = concatStringsSep ":" (map (p: "${p}/lib") buildInputs);
+      inherit (mkPaths buildInputs) C_INCLUDE_PATH LIBRARY_PATH;
 
       # non-python gdbm has a libintl dependency on i686-cygwin, not on x86_64-cygwin
       buildPhase = (if (stdenv.system == "i686-cygwin" && moduleName == "gdbm") then ''

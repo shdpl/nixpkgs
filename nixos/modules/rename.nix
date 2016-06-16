@@ -34,6 +34,8 @@ with lib;
     # Old Grub-related options.
     (mkRenamedOptionModule [ "boot" "initrd" "extraKernelModules" ] [ "boot" "initrd" "kernelModules" ])
     (mkRenamedOptionModule [ "boot" "extraKernelParams" ] [ "boot" "kernelParams" ])
+    (mkRenamedOptionModule [ "boot" "loader" "grub" "timeout" ] [ "boot" "loader" "timeout" ])
+    (mkRenamedOptionModule [ "boot" "loader" "gummiboot" "timeout" ] [ "boot" "loader" "timeout" ])
 
     # smartd
     (mkRenamedOptionModule [ "services" "smartd" "deviceOpts" ] [ "services" "smartd" "defaults" "monitored" ])
@@ -68,6 +70,10 @@ with lib;
     # proxy
     (mkRenamedOptionModule [ "nix" "proxy" ] [ "networking" "proxy" "default" ])
 
+    # sandboxing
+    (mkRenamedOptionModule [ "nix" "useChroot" ] [ "nix" "useSandbox" ])
+    (mkRenamedOptionModule [ "nix" "chrootDirs" ] [ "nix" "sandboxPaths" ])
+
     # KDE
     (mkRenamedOptionModule [ "kde" "extraPackages" ] [ "environment" "systemPackages" ])
     (mkRenamedOptionModule [ "environment" "kdePackages" ] [ "environment" "systemPackages" ])
@@ -101,6 +107,33 @@ with lib;
     # Enlightenment
     (mkRenamedOptionModule [ "services" "xserver" "desktopManager" "e19" "enable" ] [ "services" "xserver" "desktopManager" "enlightenment" "enable" ])
 
+    # Iodine
+    (mkRenamedOptionModule [ "services" "iodined" "enable" ] [ "services" "iodine" "server" "enable" ])
+    (mkRenamedOptionModule [ "services" "iodined" "domain" ] [ "services" "iodine" "server" "domain" ])
+    (mkRenamedOptionModule [ "services" "iodined" "ip" ] [ "services" "iodine" "server" "ip" ])
+    (mkRenamedOptionModule [ "services" "iodined" "extraConfig" ] [ "services" "iodine" "server" "extraConfig" ])
+    (mkRemovedOptionModule [ "services" "iodined" "client" ])
+
+    # Grsecurity
+    (mkRemovedOptionModule [ "security" "grsecurity" "kernelPatch" ])
+    (mkRemovedOptionModule [ "security" "grsecurity" "config" "mode" ])
+    (mkRemovedOptionModule [ "security" "grsecurity" "config" "priority" ])
+    (mkRemovedOptionModule [ "security" "grsecurity" "config" "system" ])
+    (mkRemovedOptionModule [ "security" "grsecurity" "config" "virtualisationConfig" ])
+    (mkRemovedOptionModule [ "security" "grsecurity" "config" "hardwareVirtualisation" ])
+    (mkRemovedOptionModule [ "security" "grsecurity" "config" "virtualisationSoftware" ])
+    (mkRemovedOptionModule [ "security" "grsecurity" "config" "sysctl" ])
+    (mkRemovedOptionModule [ "security" "grsecurity" "config" "denyChrootChmod" ])
+    (mkRemovedOptionModule [ "security" "grsecurity" "config" "denyChrootCaps" ])
+    (mkRemovedOptionModule [ "security" "grsecurity" "config" "denyUSB" ])
+    (mkRemovedOptionModule [ "security" "grsecurity" "config" "restrictProc" ])
+    (mkRemovedOptionModule [ "security" "grsecurity" "config" "restrictProcWithGroup" ])
+    (mkRemovedOptionModule [ "security" "grsecurity" "config" "unrestrictProcGid" ])
+    (mkRemovedOptionModule [ "security" "grsecurity" "config" "disableRBAC" ])
+    (mkRemovedOptionModule [ "security" "grsecurity" "config" "disableSimultConnect" ])
+    (mkRemovedOptionModule [ "security" "grsecurity" "config" "verboseVersion" ])
+    (mkRemovedOptionModule [ "security" "grsecurity" "config" "kernelExtraConfig" ])
+
     # Options that are obsolete and have no replacement.
     (mkRemovedOptionModule [ "boot" "initrd" "luks" "enable" ])
     (mkRemovedOptionModule [ "programs" "bash" "enable" ])
@@ -112,6 +145,8 @@ with lib;
     (mkRemovedOptionModule [ "services" "printing" "cupsFilesConf" ])
     (mkRemovedOptionModule [ "services" "printing" "cupsdConf" ])
     (mkRemovedOptionModule [ "services" "xserver" "startGnuPGAgent" ])
+    (mkRemovedOptionModule [ "services" "phpfpm" "phpIni" ])
+    (mkRemovedOptionModule [ "services" "dovecot2" "package" ])
 
   ];
 }

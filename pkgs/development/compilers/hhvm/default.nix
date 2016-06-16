@@ -14,7 +14,7 @@ stdenv.mkDerivation rec {
   src = fetchgit {
     url    = "https://github.com/facebook/hhvm.git";
     rev    = "f516f1bb9046218f89885a220354c19dda6d8f4d";
-    sha256 = "1jdw6j394z7ksg4wdcnm7lkcs7iam5myx6k18w8hr595s1dfk3sj";
+    sha256 = "0sv856ran15rvnrj4dk0a5jirip5w4336a0aycv9wh77wm4s8xdb";
     fetchSubmodules = true;
   };
 
@@ -26,14 +26,14 @@ stdenv.mkDerivation rec {
       gmp libyaml libedit libvpx imagemagick fribidi gperf
     ];
 
-  enableParallelBuilding = true;
+  enableParallelBuilding = false; # occasional build problems;
   dontUseCmakeBuildDir = true;
   NIX_LDFLAGS = "-lpam -L${pam}/lib";
   MYSQL_INCLUDE_DIR="${mariadb}/include/mysql";
   MYSQL_DIR=mariadb;
 
   # work around broken build system
-  NIX_CFLAGS_COMPILE = "-I${freetype}/include/freetype2";
+  NIX_CFLAGS_COMPILE = "-I${freetype.dev}/include/freetype2";
 
   prePatch = ''
     substituteInPlace hphp/util/generate-buildinfo.sh \

@@ -118,6 +118,10 @@ with stdenv.lib;
   ${optionalString (stdenv.system == "x86_64-linux") ''
     BPF_JIT y
   ''}
+  ${optionalString (versionAtLeast version "4.4") ''
+    NET_CLS_BPF m
+    NET_ACT_BPF m
+  ''}
 
   # Wireless networking.
   CFG80211_WEXT? y # Without it, ipw2200 drivers don't build
@@ -210,7 +214,7 @@ with stdenv.lib;
   OCFS2_DEBUG_MASKLOG? n
   BTRFS_FS_POSIX_ACL y
   UBIFS_FS_ADVANCED_COMPR? y
-  ${optionalString (versionAtLeast version "4.0") ''
+  ${optionalString (versionAtLeast version "4.0" && versionOlder version "4.6") ''
     NFSD_PNFS y
   ''}
   NFSD_V2_ACL y
@@ -251,12 +255,13 @@ with stdenv.lib;
     SQUASHFS_LZ4 y
   ''}
 
+  # Runtime security tests
+  DEBUG_SET_MODULE_RONX? y # Detect writes to read-only module pages
+
   # Security related features.
   STRICT_DEVMEM y # Filter access to /dev/mem
   SECURITY_SELINUX_BOOTPARAM_VALUE 0 # Disable SELinux by default
-  ${optionalString (!(features.grsecurity or false)) ''
-    DEVKMEM n # Disable /dev/kmem
-  ''}
+  DEVKMEM n # Disable /dev/kmem
   ${if versionOlder version "3.14" then ''
     CC_STACKPROTECTOR? y # Detect buffer overflows on the stack
   '' else ''
@@ -398,6 +403,10 @@ with stdenv.lib;
   ${optionalString (versionAtLeast version "3.10") ''
     UPROBE_EVENT y
   ''}
+  ${optionalString (versionAtLeast version "4.4") ''
+    BPF_SYSCALL y
+    BPF_EVENTS y
+  ''}
   FUNCTION_PROFILER y
   RING_BUFFER_BENCHMARK n
 
@@ -411,13 +420,11 @@ with stdenv.lib;
 
   # Virtualisation.
   PARAVIRT? y
-  ${optionalString (!(features.grsecurity or false))
-    (if versionAtLeast version "3.10" then ''
-      HYPERVISOR_GUEST y
-    '' else ''
-      PARAVIRT_GUEST? y
-    '')
-  }
+  ${if versionAtLeast version "3.10" then ''
+    HYPERVISOR_GUEST y
+  '' else ''
+    PARAVIRT_GUEST? y
+  ''}
   KVM_APIC_ARCHITECTURE y
   KVM_ASYNC_PF y
   ${optionalString (versionOlder version "3.7") ''
@@ -432,9 +439,7 @@ with stdenv.lib;
   ${optionalString (versionAtLeast version "4.0") ''
     KVM_GENERIC_DIRTYLOG_READ_PROTECT y
   ''}
-  ${optionalString (!features.grsecurity or true) ''
-    KVM_GUEST y
-  ''}
+  KVM_GUEST y
   KVM_MMIO y
   ${optionalString (versionAtLeast version "3.13") ''
     KVM_VFIO y
@@ -487,6 +492,9 @@ with stdenv.lib;
   ${optionalString (versionAtLeast version "3.10") ''
     BINFMT_SCRIPT y
   ''}
+
+  # For systemd-binfmt
+  BINFMT_MISC? y
 
   # Enable the 9P cache to speed up NixOS VM tests.
   9P_FSCACHE? y

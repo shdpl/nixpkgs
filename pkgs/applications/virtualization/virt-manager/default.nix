@@ -19,7 +19,7 @@ buildPythonApplication rec {
 
   propagatedBuildInputs =
     [ eventlet greenlet gflags netaddr carrot routes
-      PasteDeploy m2crypto ipy twisted sqlalchemy_migrate_0_7
+      PasteDeploy m2crypto ipy twisted
       distutils_extra simplejson readline glanceclient cheetah lockfile httplib2
       urlgrabber virtinst pyGtkGlade pythonDBus gnome_python pygobject3
       libvirt libxml2Python ipaddr vte libosinfo gobjectIntrospection gtk3 mox
@@ -39,7 +39,7 @@ buildPythonApplication rec {
   '';
 
   postInstall = ''
-    ${glib}/bin/glib-compile-schemas "$out"/share/glib-2.0/schemas
+    ${glib.dev}/bin/glib-compile-schemas "$out"/share/glib-2.0/schemas
   '';
 
   # Failed tests

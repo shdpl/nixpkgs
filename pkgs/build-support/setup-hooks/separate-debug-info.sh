@@ -1,12 +1,15 @@
-export NIX_LDFLAGS+=" --build-id"
-export NIX_CFLAGS_COMPILE+=" -ggdb"
+export NIX_SET_BUILD_ID=1
+export NIX_LDFLAGS+=" --compress-debug-sections=zlib"
+export NIX_CFLAGS_COMPILE+=" -ggdb -Wa,--compress-debug-sections"
 dontStrip=1
 
 fixupOutputHooks+=(_separateDebugInfo)
 
 _separateDebugInfo() {
+    [ -e "$prefix" ] || return 0
+
     local dst="${debug:-$out}"
-    if [ "$prefix" = "$dst" ]; then return; fi
+    if [ "$prefix" = "$dst" ]; then return 0; fi
 
     dst="$dst/lib/debug/.build-id"
 
@@ -25,18 +28,10 @@ _separateDebugInfo() {
         # Extract the debug info.
         header "separating debug info from $i (build ID $id)"
         mkdir -p "$dst/${id:0:2}"
-        objcopy --only-keep-debug "$i" "$dst/${id:0:2}/${id:2}.debug" --compress-debug-sections
+        objcopy --only-keep-debug "$i" "$dst/${id:0:2}/${id:2}.debug"
         strip --strip-debug "$i"
 
         # Also a create a symlink <original-name>.debug.
         ln -sfn ".build-id/${id:0:2}/${id:2}.debug" "$dst/../$(basename "$i")"
     done < <(find "$prefix" -type f -print0)
 }
-
-# - We might prefer to compress the debug info during link-time already,
-#   but our ld doesn't support --compress-debug-sections=zlib (yet).
-# - Debug info may cause problems due to excessive memory usage during linking.
-#   Using -Wa,--compress-debug-sections should help with that;
-#   further interesting information: https://gcc.gnu.org/wiki/DebugFission
-# - Another related tool: https://fedoraproject.org/wiki/Features/DwarfCompressor
-

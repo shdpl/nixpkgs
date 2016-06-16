@@ -6,13 +6,13 @@ let
 
   mainCfg = config.services.httpd;
 
-  httpd = mainCfg.package;
+  httpd = mainCfg.package.out;
 
   version24 = !versionOlder httpd.version "2.4";
 
   httpdConf = mainCfg.configFile;
 
-  php = pkgs.php.override { apacheHttpd = httpd; };
+  php = pkgs.php.override { apacheHttpd = httpd.dev; /* otherwise it only gets .out */ };
 
   getPort = cfg: if cfg.port != 0 then cfg.port else if cfg.enableSSL then 443 else 80;
 
@@ -337,6 +337,7 @@ let
         allModules =
           concatMap (svc: svc.extraModulesPre) allSubservices
           ++ map (name: {inherit name; path = "${httpd}/modules/mod_${name}.so";}) apacheModules
+          ++ optional mainCfg.enableMellon { name = "auth_mellon"; path = "${pkgs.apacheHttpdPackages.mod_auth_mellon}/modules/mod_auth_mellon.so"; }
           ++ optional enablePHP { name = "php5"; path = "${php}/modules/libphp5.so"; }
           ++ concatMap (svc: svc.extraModules) allSubservices
           ++ extraForeignModules;
@@ -406,7 +407,7 @@ let
         ([ mainCfg.phpOptions ] ++ (map (svc: svc.phpOptions) allSubservices));
     }
     ''
-      cat ${php}/etc/php-recommended.ini > $out
+      cat ${php}/etc/php.ini > $out
       echo "$options" >> $out
     '';
 
@@ -541,6 +542,12 @@ in
         '';
       };
 
+      enableMellon = mkOption {
+        type = types.bool;
+        default = false;
+        description = "Whether to enable the mod_auth_mellon module.";
+      };
+
       enablePHP = mkOption {
         type = types.bool;
         default = false;
@@ -650,6 +657,7 @@ in
 
         environment =
           optionalAttrs enablePHP { PHPRC = phpIni; }
+          // optionalAttrs mainCfg.enableMellon { LD_LIBRARY_PATH  = "${pkgs.xmlsec}/lib"; }
           // (listToAttrs (concatMap (svc: svc.globalEnvVars) allSubservices));
 
         preStart =
@@ -685,6 +693,7 @@ in
 
         serviceConfig.ExecStart = "@${httpd}/bin/httpd httpd -f ${httpdConf}";
         serviceConfig.ExecStop = "${httpd}/bin/httpd -f ${httpdConf} -k graceful-stop";
+        serviceConfig.ExecReload = "${httpd}/bin/httpd -f ${httpdConf} -k graceful";
         serviceConfig.Type = "forking";
         serviceConfig.PIDFile = "${mainCfg.stateDir}/httpd.pid";
         serviceConfig.Restart = "always";

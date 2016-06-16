@@ -15,11 +15,11 @@ let
   };
 in stdenv.mkDerivation rec {
   name = "python-${python.version}-bootstrapped-pip-${version}";
-  version = "8.0.2";
+  version = "8.1.2";
 
   src = fetchurl {
-    url = "https://pypi.python.org/packages/py2.py3/p/pip/pip-${version}-py2.py3-none-any.whl";
-    sha256 = "249a6f3194be8c2e8cb4d4be3f6fd16a9f1e3336218caffa8e7419e3816f9988";
+    url = "https://pypi.python.org/packages/9c/32/004ce0852e0a127f07f358b715015763273799bd798956fa930814b60f39/pip-${version}-py2.py3-none-any.whl";
+    sha256 = "18cjrd66mn4a0gwa99zzs89lrb0xn4xmajdzya6zqd7v16cdsr34";
   };
 
   unpackPhase = ''

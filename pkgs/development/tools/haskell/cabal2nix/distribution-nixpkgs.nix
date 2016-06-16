@@ -11,8 +11,8 @@ mkDerivation rec {
   src = fetchFromGitHub {
     owner = "nixos";
     repo = "cabal2nix";
-    rev = "v20160308";
-    sha256 = "02lj3x0rgpxvaimwbbjjgwm4ka0wkk4x5h35jjygz6bkr5lv3m52";
+    rev = "v20160613";
+    sha256 = "0cnc037qsmwwddws138z7w1aww0l9z5bg89dgh4vfxck29z84is9";
   };
   postUnpack = "sourceRoot+=/${pname}";
   libraryHaskellDepends = [
@@ -29,5 +29,5 @@ mkDerivation rec {
   homepage = "https://github.com/nixos/cabal2nix#readme";
   description = "Data types and functions to manipulate the Nixpkgs distribution";
   license = stdenv.lib.licenses.bsd3;
-  maintainers = with stdenv.lib.maintainers; [ simons ];
+  maintainers = with stdenv.lib.maintainers; [ peti ];
 }

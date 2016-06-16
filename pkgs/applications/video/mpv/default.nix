@@ -1,5 +1,6 @@
 { stdenv, fetchurl, docutils, makeWrapper, perl, pkgconfig, python, which
 , ffmpeg, freefont_ttf, freetype, libass, libpthreadstubs, lua, lua5_sockets
+, libuchardet, rubberband
 , x11Support ? true, libX11 ? null, libXext ? null, mesa ? null, libXxf86vm ? null
 , xineramaSupport ? true, libXinerama ? null
 , xvSupport ? true, libXv ? null
@@ -22,6 +23,8 @@
 , cacaSupport ? true, libcaca ? null
 , vaapiSupport ? false, libva ? null
 , waylandSupport ? false, wayland ? null, libxkbcommon ? null
+# scripts you want to be loaded by default
+, scripts ? []
 }:
 
 assert x11Support -> (libX11 != null && libXext != null && mesa != null && libXxf86vm != null);
@@ -45,7 +48,7 @@ assert cacaSupport -> libcaca != null;
 assert waylandSupport -> (wayland != null && libxkbcommon != null);
 
 let
-  inherit (stdenv.lib) optional optionals optionalString;
+  inherit (stdenv.lib) optional optionals optionalString concatStringsSep;
 
   # Purity: Waf is normally downloaded by bootstrap.py, but
   # for purity reasons this behavior should be avoided.
@@ -58,12 +61,12 @@ let
 in
 
 stdenv.mkDerivation rec {
-
-  name = "mpv-${meta.version}";
+  name = "mpv-${version}";
+  version = "0.17.0";
 
   src = fetchurl {
-    url = "https://github.com/mpv-player/mpv/archive/v${meta.version}.tar.gz";
-    sha256 = "1p0b83048g66icpz5n66v3k4ldr1z0rmg5d2rr7kcbspm1xj2cbx";
+    url = "https://github.com/mpv-player/mpv/archive/v${version}.tar.gz";
+    sha256 = "0vms3viwqcwl1mrgmf2yy4c69fvv7xpbkyrl693l6zpwynqd4b30";
   };
 
   patchPhase = ''
@@ -89,7 +92,7 @@ stdenv.mkDerivation rec {
   nativeBuildInputs = [ docutils makeWrapper perl pkgconfig python which ];
 
   buildInputs = [
-    ffmpeg freetype libass libpthreadstubs lua lua5_sockets
+    ffmpeg freetype libass libpthreadstubs lua lua5_sockets libuchardet rubberband
   ] ++ optionals x11Support [ libX11 libXext mesa libXxf86vm ]
     ++ optional alsaSupport alsaLib
     ++ optional xvSupport libXv
@@ -125,11 +128,12 @@ stdenv.mkDerivation rec {
     ln -s ${freefont_ttf}/share/fonts/truetype/FreeSans.ttf $out/share/mpv/subfont.ttf
   '' + optionalString youtubeSupport ''
     # Ensure youtube-dl is available in $PATH for MPV
-    wrapProgram $out/bin/mpv --prefix PATH : "${youtube-dl}/bin"
+    wrapProgram $out/bin/mpv \
+      --prefix PATH : "${youtube-dl}/bin" \
+      --add-flags "--script=${concatStringsSep "," scripts}"
   '';
 
   meta = with stdenv.lib; {
-    version = "0.15.0";
     description = "A media player that supports many video formats (MPlayer and mplayer2 fork)";
     homepage = http://mpv.io;
     license = licenses.gpl2Plus;

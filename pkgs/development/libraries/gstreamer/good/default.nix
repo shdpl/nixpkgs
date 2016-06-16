@@ -1,7 +1,7 @@
 { stdenv, fetchurl, pkgconfig, python
 , gst-plugins-base, orc, bzip2
 , libv4l, libdv, libavc1394, libiec61883
-, libvpx, speex, flac, taglib
+, libvpx, speex, flac, taglib, libshout
 , cairo, gdk_pixbuf, aalib, libcaca
 , libsoup, libpulseaudio, libintlOrEmpty
 }:
@@ -10,7 +10,7 @@ let
   inherit (stdenv.lib) optionals optionalString;
 in
 stdenv.mkDerivation rec {
-  name = "gst-plugins-good-1.6.1";
+  name = "gst-plugins-good-1.8.1";
 
   meta = with stdenv.lib; {
     description = "Gstreamer Good Plugins";
@@ -26,8 +26,10 @@ stdenv.mkDerivation rec {
 
   src = fetchurl {
     url = "${meta.homepage}/src/gst-plugins-good/${name}.tar.xz";
-    sha256 = "0darc3058kbnql3mnlpizl0sq0hhli7vkm0rpqb7nywz14abim46";
+    sha256 = "0wh9mpz3zj7vbdi3xn9gjncqal86kgxn9pdg5vl98y6n45wy20r1";
   };
+
+  outputs = [ "dev" "out" ];
 
   nativeBuildInputs = [ pkgconfig python ];
 
@@ -35,10 +37,15 @@ stdenv.mkDerivation rec {
     gst-plugins-base orc bzip2
     libdv libvpx speex flac taglib
     cairo gdk_pixbuf aalib libcaca
-    libsoup
+    libsoup libshout
   ]
   ++ libintlOrEmpty
   ++ optionals stdenv.isLinux [ libv4l libpulseaudio libavc1394 libiec61883 ];
+
+  preFixup = ''
+    mkdir -p "$dev/lib/gstreamer-1.0"
+    mv "$out/lib/gstreamer-1.0/"*.la "$dev/lib/gstreamer-1.0"
+  '';
 
   LDFLAGS = optionalString stdenv.isDarwin "-lintl";
 }

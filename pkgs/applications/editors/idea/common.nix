@@ -1,7 +1,7 @@
 { stdenv, fetchurl, makeDesktopItem, makeWrapper, patchelf, p7zip
 , coreutils, gnugrep, which, git, python, unzip, jdk }:
 
-{ name, product, version, build, src, meta } @ attrs:
+{ name, product, version, build, src, wmClass, meta } @ attrs:
 
 with stdenv.lib;
 
@@ -20,6 +20,9 @@ with stdenv; lib.makeOverridable mkDerivation rec {
     genericName = meta.description;
     categories = "Application;Development;";
     icon = execName;
+    extraEntries = ''
+      StartupWMClass=${wmClass}
+    '';
   };
 
   buildInputs = [ makeWrapper patchelf p7zip unzip ];
@@ -37,7 +40,7 @@ with stdenv; lib.makeOverridable mkDerivation rec {
         truncate --size=$size $fname
       }
 
-      interpreter=$(echo ${stdenv.glibc}/lib/ld-linux*.so.2)
+      interpreter=$(echo ${stdenv.glibc.out}/lib/ld-linux*.so.2)
       if [ "${stdenv.system}" == "x86_64-linux" ]; then
         target_size=$(get_file_size bin/fsnotifier64)
         patchelf --set-interpreter "$interpreter" bin/fsnotifier64

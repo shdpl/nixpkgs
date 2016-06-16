@@ -7,20 +7,20 @@
 { runCommand, fetchFromGitHub, git }:
 
 let
-  version = "2016-03-22";
-  rev = "f28cdedb698cf76f513fb4514b5ed2892ec89b2f";
+  version = "2016-05-28";
+  rev = "eb354be1bc4c368e4ed885bd126f625f371b4bfa";
 
   src = fetchFromGitHub {
       inherit rev;
 
       owner = "rust-lang";
       repo = "crates.io-index";
-      sha256 = "05j43pgdlf554y9r781xdc5la55anwiq6k7vml9icak699ywfxqq";
+      sha256 = "1scbfraj2cgpi5q1bkhhj18jv58hkyl9pms8qnx3fvxs6yq68ba9";
   };
 
 in
 
-runCommand "rustRegistry-${version}-${builtins.substring 0 7 rev}" {} ''
+runCommand "rustRegistry-${version}-${builtins.substring 0 7 rev}" { inherit src; } ''
   # For some reason, cargo doesn't like fetchgit's git repositories, not even
   # if we set leaveDotGit to true, set the fetchgit branch to 'master' and clone
   # the repository (tested with registry rev
@@ -44,4 +44,6 @@ runCommand "rustRegistry-${version}-${builtins.substring 0 7 rev}" {} ''
   $git config --local user.name "example"
   $git add .
   $git commit -m 'Rust registry commit'
+
+  touch $out/touch . "$out/.cargo-index-lock"
 ''

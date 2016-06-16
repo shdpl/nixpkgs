@@ -1,10 +1,8 @@
-{ stdenv, fetchFromGitHub, coreutils, qtbase, qtdeclarative, texlive }:
+{ stdenv, fetchFromGitHub, coreutils, qtbase, qtdeclarative, qmakeHook, texlive }:
 
-let
-  version = "37.0.0";
-in
-stdenv.mkDerivation {
+stdenv.mkDerivation rec {
   name = "dwarf-therapist-original-${version}";
+  version = "37.0.0";
 
   src = fetchFromGitHub {
     owner = "splintermind";
@@ -15,19 +13,17 @@ stdenv.mkDerivation {
 
   outputs = [ "out" "layouts" ];
   buildInputs = [ qtbase qtdeclarative ];
-  nativeBuildInputs = [ texlive ];
+  nativeBuildInputs = [ texlive qmakeHook ];
 
   enableParallelBuilding = false;
-
-  configurePhase = ''
-    qmake PREFIX=$out
-  '';
 
   # Move layout files so they cannot be found by Therapist
   postInstall = ''
     mkdir -p $layouts
     mv $out/share/dwarftherapist/memory_layouts/* $layouts
     rmdir $out/share/dwarftherapist/memory_layouts
+    # Useless symlink
+    rm $out/bin/dwarftherapist
   '';
 
   meta = {

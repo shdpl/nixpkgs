@@ -1,7 +1,7 @@
 { stdenv, lib, fetchurl, tzdata, iana_etc, go_1_4, runCommand
 , perl, which, pkgconfig, patch, fetchpatch
 , pcre
-, Security, Foundation }:
+, Security, Foundation, bash }:
 
 let
   goBootstrap = runCommand "go-bootstrap" {} ''
@@ -15,11 +15,11 @@ in
 
 stdenv.mkDerivation rec {
   name = "go-${version}";
-  version = "1.6";
+  version = "1.6.2";
 
   src = fetchurl {
     url = "https://github.com/golang/go/archive/go${version}.tar.gz";
-    sha256 = "04g7w34qamgy9gqpy75xm03s8xbbslv1735iv1a06z8sphpkgs7m";
+    sha256 = "17sfhg3xfnakk666wlsbhxp4vbn19hlywf5cn1zfcd4zqkcyx30h";
   };
 
   # perl is used for testing go vet
@@ -32,6 +32,7 @@ stdenv.mkDerivation rec {
   # I'm not sure what go wants from its 'src', but the go installation manual
   # describes an installation keeping the src.
   preUnpack = ''
+    topdir=$PWD
     mkdir -p $out/share
     cd $out/share
   '';
@@ -92,20 +93,22 @@ stdenv.mkDerivation rec {
     sed -i '/TestDisasmExtld/areturn' src/cmd/objdump/objdump_test.go
 
     touch $TMPDIR/group $TMPDIR/hosts $TMPDIR/passwd
+
+    sed -i '1 a\exit 0' misc/cgo/errors/test.bash
+
+    mkdir $topdir/dirtyhacks
+    cat <<EOF > $topdir/dirtyhacks/clang
+    #!${bash}/bin/bash
+    $(type -P clang) "\$@" 2> >(sed '/ld: warning:.*ignoring unexpected dylib file/ d' 1>&2)
+    exit $?
+    EOF
+    chmod +x $topdir/dirtyhacks/clang
+    PATH=$topdir/dirtyhacks:$PATH
   '';
 
   patches = [
     ./remove-tools-1.5.patch
-    # Fix bug when using musl (see https://github.com/golang/go/issues/14476)
-    # Should be fixed by go 1.6.1
-    (fetchpatch {
-      url = "https://github.com/golang/go/commit/1439158120742e5f41825de90a76b680da64bf76.patch";
-      sha256 = "0yixpbx056ns5wgd3f4absgiyc2ymmqk8mkhhz5ja90dvilzxcwd";
-    })
-  ]
-  # -ldflags=-s is required to compile on Darwin, see
-  # https://github.com/golang/go/issues/11994
-  ++ stdenv.lib.optional stdenv.isDarwin ./strip.patch;
+  ];
 
   GOOS = if stdenv.isDarwin then "darwin" else "linux";
   GOARCH = if stdenv.isDarwin then "amd64"

@@ -8,18 +8,25 @@ assert xineramaSupport -> xorg.libXinerama != null;
 assert cupsSupport -> cups != null;
 
 stdenv.mkDerivation rec {
-  name = "gtk+-2.24.29";
+  name = "gtk+-2.24.30";
 
   src = fetchurl {
     url = "mirror://gnome/sources/gtk+/2.24/${name}.tar.xz";
-    sha256 = "1f1ifv1ijrda4jx831l24d3ww65v5gf56r464fi11n6k02bcah87";
+    sha256 = "0d15cec3b6d55c60eac205b1f3ba81a1ed4eadd9d0f8e7c508bc7065d0c4ca50";
   };
+
+  outputs = [ "dev" "out" "docdev" ];
+  outputBin = "dev";
 
   enableParallelBuilding = true;
 
   NIX_CFLAGS_COMPILE = stdenv.lib.optionalString (libintlOrEmpty != []) "-lintl";
 
-  nativeBuildInputs = [ perl pkgconfig gettext ];
+  setupHook = ./setup-hook.sh;
+
+  nativeBuildInputs = [ setupHook perl pkgconfig gettext ];
+
+  patches = [ ./2.0-immodules.cache.patch ];
 
   propagatedBuildInputs = with xorg; with stdenv.lib;
     [ glib cairo pango gdk_pixbuf atk ]
@@ -35,7 +42,9 @@ stdenv.mkDerivation rec {
     then "--disable-glibtest --disable-introspection --disable-visibility"
     else "--with-xinput=yes";
 
-  postInstall = "rm -rf $out/share/gtk-doc";
+  postInstall = ''
+    moveToOutput share/gtk-2.0/demo "$docdev"
+  '';
 
   passthru = {
     gtkExeEnvPostBuild = ''

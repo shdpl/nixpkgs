@@ -5,10 +5,10 @@
 , libevent, expat, libjpeg, snappy
 , libpng, libxml2, libxslt, libcap
 , xdg_utils, yasm, minizip, libwebp
-, libusb1, libexif, pciutils, nss
+, libusb1, pciutils, nss
 
 , python, pythonPackages, perl, pkgconfig
-, nspr, udev, kerberos
+, nspr, libudev, kerberos
 , utillinux, alsaLib
 , bison, gperf
 , glib, gtk, dbus_glib
@@ -17,6 +17,7 @@
 
 # optional dependencies
 , libgcrypt ? null # gnomeSupport || cupsSupport
+, libexif ? null # only needed for Chromium before version 51
 
 # package customization
 , enableSELinux ? false, libselinux ? null
@@ -55,9 +56,9 @@ let
     use_system_flac = true;
     use_system_libevent = true;
     use_system_libexpat = true;
-    use_system_libexif = true;
-    use_system_libjpeg = true;
-    use_system_libpng = true;
+    # XXX: System libjpeg fails to link for version 52.0.2743.10
+    use_system_libjpeg = upstream-info.version != "52.0.2743.10";
+    use_system_libpng = false;
     use_system_libwebp = true;
     use_system_libxml = true;
     use_system_opus = true;
@@ -86,7 +87,7 @@ let
     libevent expat libjpeg snappy
     libpng libxml2 libxslt libcap
     xdg_utils yasm minizip libwebp
-    libusb1 libexif
+    libusb1
   ];
 
   # build paths and release info
@@ -112,7 +113,7 @@ let
     buildInputs = defaultDependencies ++ [
       which
       python perl pkgconfig
-      nspr nss udev
+      nspr nss libudev
       utillinux alsaLib
       bison gperf kerberos
       glib gtk dbus_glib
@@ -126,11 +127,10 @@ let
       ++ optional pulseSupport libpulseaudio;
 
     patches = [
-      ./patches/build_fixes_46.patch
       ./patches/widevine.patch
-      (if versionOlder version "50.0.0.0"
-       then ./patches/nix_plugin_paths_46.patch
-       else ./patches/nix_plugin_paths_50.patch)
+      (if versionOlder version "52.0.0.0"
+       then ./patches/nix_plugin_paths_50.patch
+       else ./patches/nix_plugin_paths_52.patch)
     ];
 
     postPatch = ''
@@ -140,22 +140,24 @@ let
         -e "/python_arch/s/: *'[^']*'/: '""'/" \
         build/common.gypi chrome/chrome_tests.gypi
 
-      sed -i -e '/module_path *=.*libexif.so/ {
-        s|= [^;]*|= base::FilePath().AppendASCII("${libexif}/lib/libexif.so")|
-      }' chrome/utility/media_galleries/image_metadata_extractor.cc
-
-      sed -i -e '/lib_loader.*Load/s!"\(libudev\.so\)!"${udev}/lib/\1!' \
+      sed -i -e '/lib_loader.*Load/s!"\(libudev\.so\)!"${libudev.out}/lib/\1!' \
         device/udev_linux/udev?_loader.cc
 
       sed -i -e '/libpci_loader.*Load/s!"\(libpci\.so\)!"${pciutils}/lib/\1!' \
         gpu/config/gpu_info_collector_linux.cc
+
+      sed -i -re 's/([^:])\<(isnan *\()/\1std::\2/g' \
+        chrome/browser/ui/webui/engagement/site_engagement_ui.cc
+    '' + optionalString (versionAtLeast version "52.0.0.0") ''
+      sed -i -re 's/([^:])\<(isnan *\()/\1std::\2/g' \
+        third_party/pdfium/xfa/fxbarcode/utils.h
     '';
 
     gypFlags = mkGypFlags (gypFlagsUseSystemLibs // {
       linux_use_bundled_binutils = false;
       linux_use_bundled_gold = false;
-      linux_use_gold_binary = false;
-      linux_use_gold_flags = false;
+      linux_use_gold_flags = true;
+
       proprietary_codecs = false;
       use_sysroot = false;
       use_gnome_keyring = gnomeKeyringSupport;
@@ -179,7 +181,6 @@ let
       google_api_key = "AIzaSyDGi15Zwl11UNe6Y-5XW_upsfyw31qwZPI";
       google_default_client_id = "404761575300.apps.googleusercontent.com";
       google_default_client_secret = "9rIFQjfnkykEmqb6FfjJQD1D";
-
     } // optionalAttrs proprietaryCodecs {
       # enable support for the H.264 codec
       proprietary_codecs = true;

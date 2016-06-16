@@ -1,5 +1,5 @@
 { stdenv, fetchurl, pkgconfig, perl
-, http2Support ? true, libnghttp2
+, http2Support ? true, nghttp2
 , idnSupport ? false, libidn ? null
 , ldapSupport ? false, openldap ? null
 , zlibSupport ? false, zlib ? null
@@ -9,7 +9,7 @@
 , c-aresSupport ? false, c-ares ? null
 }:
 
-assert http2Support -> libnghttp2 != null;
+assert http2Support -> nghttp2 != null;
 assert idnSupport -> libidn != null;
 assert ldapSupport -> openldap != null;
 assert zlibSupport -> zlib != null;
@@ -25,13 +25,15 @@ stdenv.mkDerivation rec {
     sha256 = "13z9gba3q2ybp50z0gdkzhwcx9m0i7qkvm278yz4pql2jfml7inx";
   };
 
+  outputs = [ "dev" "out" "bin" "man" "docdev" ];
+
   nativeBuildInputs = [ pkgconfig perl ];
 
   # Zlib and OpenSSL must be propagated because `libcurl.la' contains
   # "-lz -lssl", which aren't necessary direct build inputs of
   # applications that use Curl.
   propagatedBuildInputs = with stdenv.lib;
-    optional http2Support libnghttp2 ++
+    optional http2Support nghttp2 ++
     optional idnSupport libidn ++
     optional ldapSupport openldap ++
     optional zlibSupport zlib ++
@@ -49,18 +51,22 @@ stdenv.mkDerivation rec {
   configureFlags = [
       "--with-ca-bundle=/etc/ssl/certs/ca-certificates.crt"
       "--disable-manual"
-      ( if http2Support then "--with-nghttp2=${libnghttp2}" else "--without-nghttp2" )
-      ( if sslSupport then "--with-ssl=${openssl}" else "--without-ssl" )
-      ( if scpSupport then "--with-libssh2=${libssh2}" else "--without-libssh2" )
+      ( if sslSupport then "--with-ssl=${openssl.dev}" else "--without-ssl" )
+      ( if scpSupport then "--with-libssh2=${libssh2.dev}" else "--without-libssh2" )
       ( if ldapSupport then "--enable-ldap" else "--disable-ldap" )
       ( if ldapSupport then "--enable-ldaps" else "--disable-ldaps" )
-      ( if idnSupport then "--with-libidn=${libidn}" else "--without-libidn" )
+      ( if idnSupport then "--with-libidn=${libidn.dev}" else "--without-libidn" )
     ]
     ++ stdenv.lib.optional c-aresSupport "--enable-ares=${c-ares}"
     ++ stdenv.lib.optional gssSupport "--with-gssapi=${gss}";
 
   CXX = "g++";
   CXXCPP = "g++ -E";
+
+  postInstall = ''
+    moveToOutput bin/curl-config "$dev"
+    sed '/^dependency_libs/s|${libssh2.dev}|${libssh2.out}|' -i "$out"/lib/*.la
+  '';
 
   crossAttrs = {
     # We should refer to the cross built openssl

@@ -1,11 +1,13 @@
-{ stdenv, fetchgit, rustPlatform, file, curl, python, pkgconfig, openssl
-, cmake, zlib, makeWrapper }:
+{ stdenv, lib, cacert, fetchgit, rustPlatform, file, curl, python, pkgconfig, openssl
+, cmake, zlib, makeWrapper
+# Darwin dependencies
+, libiconv }:
 
 with rustPlatform;
 
 with ((import ./common.nix) {
   inherit stdenv rustc;
-  version = "0.8.0";
+  version = "0.10.0";
 });
 
 buildRustPackage rec {
@@ -15,12 +17,13 @@ buildRustPackage rec {
   src = fetchgit {
     url = "git://github.com/rust-lang/cargo";
     rev = "refs/tags/${version}";
-    sha256 = "02z0b6hpygjjfbskg22ggrhdv2nasrgf8x1fd8y0qzg4krx2czlh";
+    sha256 = "06scvx5qh60mgvlpvri9ig4np2fsnicsfd452fi9w983dkxnz4l2";
   };
 
-  depsSha256 = "1gwc5ygs3h8jxs506xmbj1xzaqpb3kmg3pkxg9j9yqy616jw6rcn";
+  depsSha256 = "0js4697n7v93wnqnpvamhp446w58llj66za5hkd6wannmc0gsy3b";
 
-  buildInputs = [ file curl pkgconfig python openssl cmake zlib makeWrapper ];
+  buildInputs = [ file curl pkgconfig python openssl cmake zlib makeWrapper ]
+    ++ lib.optional stdenv.isDarwin libiconv;
 
   configurePhase = ''
     ./configure --enable-optimize --prefix=$out --local-cargo=${cargo}/bin/cargo
@@ -28,8 +31,15 @@ buildRustPackage rec {
 
   buildPhase = "make";
 
-  # Disable check phase as there are lots of failures (some probably due to
-  # trying to access the network).
+  checkPhase = ''
+    # Export SSL_CERT_FILE as without it one test fails with SSL verification error
+    export SSL_CERT_FILE=${cacert}/etc/ssl/certs/ca-bundle.crt
+    # Disable cross compilation tests
+    export CFG_DISABLE_CROSS_TESTS=1
+    cargo test
+  '';
+
+  # Disable check phase as there are failures (author_prefers_cargo test fails)
   doCheck = false;
 
   installPhase = ''

@@ -10,7 +10,7 @@ let
   soext = if stdenv.system == "x86_64-darwin" then "dylib" else "so";
 
 in stdenv.mkDerivation rec {
-  version = "0.27.1";
+  version = "0.28.0";
   name = "mesos-${version}";
 
   enableParallelBuilding = true;
@@ -18,7 +18,7 @@ in stdenv.mkDerivation rec {
 
   src = fetchurl {
     url = "mirror://apache/mesos/${version}/${name}.tar.gz";
-    sha256 = "147iq7vwi09kqblx1h8r6lkrg9g50i257qk1cph1zr5j3rncz7l8";
+    sha256 = "05dnj6r5pspizna0fk7yayn38a4w9hlcswgg8l9qmb35m6nq6hby";
   };
 
   patches = [
@@ -71,7 +71,7 @@ in stdenv.mkDerivation rec {
   '' + lib.optionalString stdenv.isLinux ''
 
     substituteInPlace configure.ac             \
-      --replace /usr/include/libnl3 ${libnl}/include/libnl3
+      --replace /usr/include/libnl3 ${libnl.dev}/include/libnl3
 
     substituteInPlace src/linux/perf.cpp       \
       --replace '"perf ' '"${perf}/bin/perf '
@@ -94,17 +94,17 @@ in stdenv.mkDerivation rec {
 
   configureFlags = [
     "--sbindir=\${out}/bin"
-    "--with-apr=${apr}"
-    "--with-svn=${subversion}"
+    "--with-apr=${apr.dev}"
+    "--with-svn=${subversion.dev}"
     "--with-leveldb=${leveldb}"
     "--with-glog=${glog}"
     "--with-glog=${glog}"
     "--enable-optimize"
     "--disable-python-dependency-install"
     "--enable-ssl"
-    "--with-ssl=${openssl}"
+    "--with-ssl=${openssl.dev}"
     "--enable-libevent"
-    "--with-libevent=${libevent}"
+    "--with-libevent=${libevent.dev}"
   ] ++ lib.optionals stdenv.isLinux [
     "--with-network-isolator"
   ];

@@ -33,9 +33,9 @@ stdenv.mkDerivation rec {
   configureFlags = [
     "--sysconfdir=/etc"
     "--localstatedir=/var"
-    "--with-openldap=${openldap}"
+    "--with-openldap"
     "--with-db=${db}"
-    "--with-sasl=${cyrus_sasl}"
+    "--with-sasl=${cyrus_sasl.dev}"
     "--with-netsnmp=${net_snmp}"
   ];
   
