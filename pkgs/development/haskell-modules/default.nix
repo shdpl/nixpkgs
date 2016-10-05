@@ -9,8 +9,8 @@ let
   allCabalFiles = pkgs.fetchFromGitHub {
      owner = "commercialhaskell";
      repo = "all-cabal-hashes";
-     rev = "461610ab6f0cf581e186643c037f1981755792d9";
-     sha256 = "0x2577lfd5cbbaivl72273kw93gcmxvbjybk7w4h2ic3zvs1fnvm";
+     rev = "72f1318540eff69544eb8c14a16f630d0c5448b8";
+     sha256 = "1czi1rajk2726mqrw3qp7a43h26acbjw54ll3ns063yzg9hg469m";
    };
 
   inherit (stdenv.lib) fix' extends;
@@ -49,7 +49,7 @@ let
         overrideScope = f: callPackageWithScope (mkScope (fix' (extends f scope.__unfix__))) drv args;
       };
 
-      mkScope = scope: pkgs // pkgs.xorg // pkgs.gnome // scope;
+      mkScope = scope: pkgs // pkgs.xorg // pkgs.gnome2 // scope;
       defaultScope = mkScope self;
       callPackage = drv: args: callPackageWithScope defaultScope drv args;
 
@@ -85,7 +85,10 @@ let
         ghcWithHoogle = selectFrom:
           let
             packages = selectFrom self;
-            hoogle = callPackage ./hoogle.nix { inherit packages; };
+            hoogle = callPackage ./hoogle.nix {
+              inherit packages;
+              hoogle = self.hoogle_5_0_4;
+            };
           in withPackages (packages ++ [ hoogle ]);
 
         ghc = ghc // {

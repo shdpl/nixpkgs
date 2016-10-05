@@ -33,6 +33,14 @@ in
         default = false;
         description = "Don't install XFCE desktop components (xfdesktop, panel and notification daemon).";
       };
+
+      extraSessionCommands = mkOption {
+        default = "";
+        type = types.lines;
+        description = ''
+          Shell commands executed just before XFCE is started.
+        '';
+      };
     };
 
   };
@@ -45,6 +53,8 @@ in
         bgSupport = true;
         start =
           ''
+            ${cfg.extraSessionCommands}
+
             # Set GTK_PATH so that GTK+ can find the theme engines.
             export GTK_PATH="${config.system.path}/lib/gtk-2.0:${config.system.path}/lib/gtk-3.0"
 
@@ -59,7 +69,7 @@ in
     services.xserver.updateDbusEnvironment = true;
 
     environment.systemPackages =
-      [ pkgs.gtk # To get GTK+'s themes.
+      [ pkgs.gtk.out # To get GTK+'s themes and gtk-update-icon-cache
         pkgs.hicolor_icon_theme
         pkgs.tango-icon-theme
         pkgs.shared_mime_info
@@ -90,6 +100,7 @@ in
         pkgs.xfce.tumbler       # found via dbus
       ]
       ++ optional config.powerManagement.enable pkgs.xfce.xfce4_power_manager
+      ++ optional config.networking.networkmanager.enable pkgs.networkmanagerapplet
       ++ optionals (!cfg.noDesktop)
          [ pkgs.xfce.xfce4panel
            pkgs.xfce.xfdesktop

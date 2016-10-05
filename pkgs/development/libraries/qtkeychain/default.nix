@@ -11,7 +11,7 @@ stdenv.mkDerivation rec {
     sha256 = "10msaylisbwmgpwd59vr4dfgml75kji8mlfwnwq8yp29jikj5amq";
   };
 
-  cmakeFlags = [ "-DQT_TRANSLATIONS_DIR=$out/share/qt/translations" ];
+  cmakeFlags = [ "-DQT_TRANSLATIONS_DIR=share/qt/translations" ];
 
   buildInputs = [ cmake qt4 ];
 
@@ -19,5 +19,6 @@ stdenv.mkDerivation rec {
     description = "Platform-independent Qt API for storing passwords securely";
     homepage = "https://github.com/frankosterfeld/qtkeychain";
     license = stdenv.lib.licenses.bsd3;
+    platforms = stdenv.lib.platforms.linux;
   };
 }

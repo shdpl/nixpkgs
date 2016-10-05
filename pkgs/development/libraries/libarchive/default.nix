@@ -2,21 +2,15 @@
 , sharutils }:
 
 stdenv.mkDerivation rec {
-  name = "libarchive-3.1.2";
+  name = "libarchive-${version}";
+  version = "3.2.1";
 
   src = fetchurl {
-    urls = [
-      "http://pkgs.fedoraproject.org/repo/pkgs/libarchive/libarchive-3.1.2.tar.gz/efad5a503f66329bb9d2f4308b5de98a/${name}.tar.gz"
-      "${meta.homepage}/downloads/${name}.tar.gz"
-    ];
-    sha256 = "0pixqnrcf35dnqgv0lp7qlcw7k13620qkhgxr288v7p4iz6ym1zb";
+    url = "${meta.homepage}/downloads/${name}.tar.gz";
+    sha256 = "1lngng84k1kkljl74q0cdqc3s82vn2kimfm02dgm4d6m7x71mvkj";
   };
 
-  patches = [
-    ./CVE-2013-0211.patch # https://github.com/libarchive/libarchive/commit/22531545
-    ./CVE-2015-1197.patch # https://github.com/NixOS/nixpkgs/issues/6799
-      # ^ it's CVE-2015-2304 specific to libarchive
-  ];
+  outputs = [ "out" "lib" "dev" ];
 
   buildInputs = [ sharutils libxml2 zlib bzip2 openssl xz lzo ] ++
     stdenv.lib.optionals stdenv.isLinux [ e2fsprogs attr acl ];
@@ -29,7 +23,7 @@ stdenv.mkDerivation rec {
   '' else null;
 
   preFixup = ''
-    sed -i $out/lib/libarchive.la \
+    sed -i $lib/lib/libarchive.la \
       -e 's|-lcrypto|-L${openssl.out}/lib -lcrypto|' \
       -e 's|-llzo2|-L${lzo}/lib -llzo2|'
   '';
@@ -39,7 +33,7 @@ stdenv.mkDerivation rec {
     longDescription = ''
       This library has code for detecting and reading many archive formats and
       compressions formats including (but not limited to) tar, shar, cpio, zip, and
-      compressed with gzip, bzip2, lzma, xz, .. 
+      compressed with gzip, bzip2, lzma, xz, ...
     '';
     homepage = http://libarchive.org;
     license = stdenv.lib.licenses.bsd3;

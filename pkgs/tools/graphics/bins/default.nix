@@ -41,8 +41,9 @@ stdenv.mkDerivation {
   '';
 
   meta = {
-    description = "generates static HTML photo albums";
+    description = "Generates static HTML photo albums";
     homepage = http://bins.sautret.org;
     license = stdenv.lib.licenses.gpl2;
+    platforms = stdenv.lib.platforms.linux;
   };
 }

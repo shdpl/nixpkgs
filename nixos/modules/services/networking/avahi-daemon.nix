@@ -24,6 +24,7 @@ let
     use-ipv4=${if ipv4 then "yes" else "no"}
     use-ipv6=${if ipv6 then "yes" else "no"}
     ${optionalString (interfaces!=null) "allow-interfaces=${concatStringsSep "," interfaces}"}
+    ${optionalString (domainName!=null) "domain-name=${domainName}"}
 
     [wide-area]
     enable-wide-area=${if wideArea then "yes" else "no"}
@@ -65,8 +66,17 @@ in
         '';
       };
 
+      domainName = mkOption {
+        type = types.str;
+        default = "local";
+        description = ''
+          Domain name for all advertisements.
+        '';
+      };
+
       browseDomains = mkOption {
-        default = [ "0pointer.de" "zeroconf.org" ];
+        default = [ ];
+        example = [ "0pointer.de" "zeroconf.org" ];
         description = ''
           List of non-local DNS domains to be browsed.
         '';

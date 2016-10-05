@@ -1,19 +1,20 @@
-{ stdenv, makeWrapper, fetchurl, xlibsWrapper, imlib2, libjpeg, libpng
-, libXinerama, curl, libexif, perlPackages }:
+{ stdenv, fetchurl, makeWrapper, xorg, imlib2, libjpeg, libpng
+, curl, libexif, perlPackages }:
 
 stdenv.mkDerivation rec {
-  name = "feh-2.15.4";
+  name = "feh-2.17.1";
 
   src = fetchurl {
     url = "http://feh.finalrewind.org/${name}.tar.bz2";
-    sha256 = "b8a9c29f37b1349228b19866f712b677e2a150837bc46be8c5d6348dd4850758";
+    sha256 = "0lyq17kkmjxj3vxpmri56linr1bnfmx5568pgrcjgd3amnj1is59";
   };
 
   outputs = [ "out" "doc" ];
 
-  nativeBuildInputs = [ makeWrapper ];
-  buildInputs = [ xlibsWrapper imlib2 libjpeg libpng libXinerama curl libexif ]
+  nativeBuildInputs = [ makeWrapper xorg.libXt ]
     ++ stdenv.lib.optional doCheck [ perlPackages.TestCommand perlPackages.TestHarness ];
+
+  buildInputs = [ xorg.libX11 xorg.libXinerama imlib2 libjpeg libpng curl libexif ];
 
   preBuild = ''
     makeFlags="PREFIX=$out exif=1"

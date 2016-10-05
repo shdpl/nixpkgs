@@ -3,11 +3,13 @@
 , doxygen, aqbanking, gwenhywfar }:
 
 stdenv.mkDerivation rec {
-  name = "kmymoney-4.7.2";
+  name = "kmymoney-${version}";
+  # If you bump this version to > 4.8.0, please remove the seqaccessmgrtest.patch. It will be no longer necessary.
+  version = "4.8.0";
 
   src = fetchurl {
-    url = "mirror://sourceforge/kmymoney2/${name}.tar.xz";
-    sha256 = "0g9rakjx7zmw4bf7m5516rrx0n3bl2by3nn24iiz9209yfgw5cmz";
+    url = "mirror://kde/stable/kmymoney/${version}/src/${name}.tar.xz";
+    sha256 = "1hlayhcmdfayma4hchv2bfyg82ry0h74hg4095d959mg19qkb9n2";
   };
 
   cmakeFlags = [
@@ -20,7 +22,10 @@ stdenv.mkDerivation rec {
 
   KDEDIRS = libalkimia;
 
-  patches = [ ./qgpgme.patch ];
+  patches = [
+    ./qgpgme.patch
+    ./seqaccessmgrtest.patch
+  ];
 
   meta = {
     homepage = http://kmymoney2.sourceforge.net/;

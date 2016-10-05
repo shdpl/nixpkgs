@@ -11,11 +11,12 @@ let
     else throw "ImageMagick is not supported on this platform.";
 
   cfg = {
-    version = "6.9.3-9";
-    sha256 = "0q19jgn1iv7zqrw8ibxp4z57iihrc9kyb09k2wnspcacs6vrvinf";
+    version = "6.9.5-10";
+    sha256 = "0cxjzqzca80vf6sfx4z9zq4wq2w0vy9ajp9kf88jb4na8mwsn198";
     patches = [];
   }
     # Freeze version on mingw so we don't need to port the patch too often.
+    # FIXME: This version has multiple security vulnerabilities
     // lib.optionalAttrs (stdenv.cross.libc or null == "msvcrt") {
         version = "6.9.2-0";
         sha256 = "17ir8bw1j7g7srqmsz3rx780sgnc21zfn0kwyj78iazrywldx8h7";
@@ -43,7 +44,7 @@ stdenv.mkDerivation rec {
 
   patches = [ ./imagetragick.patch ] ++ cfg.patches;
 
-  outputs = [ "dev" "out" "doc" ]; # bin/ isn't really big
+  outputs = [ "out" "dev" "doc" ]; # bin/ isn't really big
   outputMan = "out"; # it's tiny
 
   enableParallelBuilding = true;

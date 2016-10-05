@@ -280,7 +280,7 @@ let
       onigVariable = "ONIG_DIR=${oniguruma}";
       gnuVariable = "GNU_INCDIR=${gnulib}/lib";
       treVariable = "TRE_DIR=${tre}";
-      posixVariable = "POSIX_DIR=${glibc}";
+      posixVariable = "POSIX_DIR=${glibc.dev}";
     in ''
       sed -e 's@$(LUAROCKS) $(LUAROCKS_COMMAND) $$i;@$(LUAROCKS) $(LUAROCKS_COMMAND) $$i ${pcreVariable} ${onigVariable} ${gnuVariable} ${treVariable} ${posixVariable};@' \
           -i Makefile
@@ -427,7 +427,7 @@ let
     };
 
     meta = with stdenv.lib; {
-      description = "vicious widgets for window managers";
+      description = "Vicious widgets for window managers";
       homepage    = http://git.sysphere.org/vicious/;
       license     = licenses.gpl2;
       maintainers = with maintainers; [ makefu ];

@@ -653,7 +653,7 @@ then you have to download and re-install `foo` and all its dependents from
 scratch:
 
     # nix-store -q --referrers /nix/store/*-haskell-text-1.2.0.4 \
-      | xargs -L 1 nix-store --repair-path --option binary-caches http://hydra.nixos.org
+      | xargs -L 1 nix-store --repair-path
 
 If you're using additional Hydra servers other than `hydra.nixos.org`, then it
 might be necessary to purge the local caches that store data from those
@@ -740,7 +740,7 @@ to the `stack.yaml` like the following:
       enable: true
 	  packages: [ zlib ]
 
-Stack's Nix support knows to add `${zlib}/lib` and `${zlib}/include` as an
+Stack's Nix support knows to add `${zlib.out}/lib` and `${zlib.dev}/include` as an
 `--extra-lib-dirs` and `extra-include-dirs`, respectively. Alternatively, you
 can achieve the same effect by hand. First of all, run
 
