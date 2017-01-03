@@ -273,6 +273,7 @@
       gocd-server = 252;
       terraria = 253;
       mattermost = 254;
+      bitcoind = 255;
 
       # When adding a uid, make sure it doesn't match an existing gid. And don't use uids above 399!
 
