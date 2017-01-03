@@ -300,6 +300,7 @@
   ./services/misc/autofs.nix
   ./services/misc/autorandr.nix
   ./services/misc/bepasty.nix
+  ./services/misc/bitcoind.nix
   ./services/misc/canto-daemon.nix
   ./services/misc/calibre-server.nix
   ./services/misc/cfdyndns.nix

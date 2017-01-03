@@ -305,6 +305,7 @@
       hass = 286;
       monero = 287;
       ceph = 288;
+      bitcoind = 289;
 
       # When adding a uid, make sure it doesn't match an existing gid. And don't use uids above 399!
 
