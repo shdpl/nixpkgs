@@ -282,6 +282,7 @@
       infinoted = 264;
       keystone = 265;
       glance = 266;
+      bitcoind = 267;
 
       # When adding a uid, make sure it doesn't match an existing gid. And don't use uids above 399!
 
