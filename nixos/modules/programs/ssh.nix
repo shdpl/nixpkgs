@@ -26,6 +26,8 @@ let
       + (if h.publicKey != null then h.publicKey else readFile h.publicKeyFile)
     );
 
+  supportOldHostKeys = !versionAtLeast config.system.stateVersion "15.07";
+
 in
 {
   ###### interface
@@ -189,9 +191,12 @@ in
 
         ForwardX11 ${if cfg.forwardX11 then "yes" else "no"}
 
-        # Allow DSA keys for now. (These were deprecated in OpenSSH 7.0.)
-        PubkeyAcceptedKeyTypes +ssh-dss
-        HostKeyAlgorithms +ssh-dss
+        ${optionalString supportOldHostKeys ''
+          # Allow DSA client keys for now. (These were deprecated
+          # in OpenSSH 7.0.)
+          PubkeyAcceptedKeyTypes +ssh-dss
+          HostKeyAlgorithms +ssh-dss
+        ''}
 
         ${cfg.extraConfig}
       '';
