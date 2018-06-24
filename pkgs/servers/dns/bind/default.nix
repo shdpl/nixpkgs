@@ -1,23 +1,28 @@
 { stdenv, lib, fetchurl, openssl, libtool, perl, libxml2
-, libseccomp ? null }:
+, enableSeccomp ? false, libseccomp ? null }:
 
-let version = "9.10.4-P4"; in
+assert enableSeccomp -> libseccomp != null;
+
+let version = "9.12.1-P2"; in
 
 stdenv.mkDerivation rec {
   name = "bind-${version}";
 
   src = fetchurl {
     url = "http://ftp.isc.org/isc/bind9/${version}/${name}.tar.gz";
-    sha256 = "11lxkb7d79c75scrs28q4xmr0ii2li69zj1c650al3qxir8yf754";
+    sha256 = "0a9dvyg1dk7vpqn9gz7p5jas3bz7z22bjd66b98g1qk16i2w7rqd";
   };
 
-  outputs = [ "bin" "lib" "dev" "out" "man" "dnsutils" "host" ];
+  outputs = [ "out" "lib" "dev" "man" "dnsutils" "host" ];
 
   patches = [ ./dont-keep-configure-flags.patch ./remove-mkdir-var.patch ] ++
     stdenv.lib.optional stdenv.isDarwin ./darwin-openssl-linking-fix.patch;
 
-  buildInputs = [ openssl libtool perl libxml2 ] ++
-    stdenv.lib.optional stdenv.isLinux libseccomp;
+  nativeBuildInputs = [ perl ];
+  buildInputs = [ openssl libtool libxml2 ] ++
+    stdenv.lib.optional enableSeccomp libseccomp;
+
+  STD_CDEFINES = [ "-DDIG_SIGCHASE=1" ]; # support +sigchase
 
   configureFlags = [
     "--localstatedir=/var"
@@ -30,23 +35,21 @@ stdenv.mkDerivation rec {
     "--without-gssapi"
     "--without-idn"
     "--without-idnlib"
+    "--without-lmdb"
     "--without-pkcs11"
     "--without-purify"
     "--without-python"
-  ] ++ lib.optional (stdenv.isi686 || stdenv.isx86_64) "--enable-seccomp";
+  ] ++ lib.optional enableSeccomp "--enable-seccomp";
 
   postInstall = ''
     moveToOutput bin/bind9-config $dev
     moveToOutput bin/isc-config.sh $dev
 
     moveToOutput bin/host $host
-    ln -sf $host/bin/host $bin/bin
 
     moveToOutput bin/dig $dnsutils
     moveToOutput bin/nslookup $dnsutils
     moveToOutput bin/nsupdate $dnsutils
-    ln -sf $dnsutils/bin/{dig,nslookup,nsupdate} $bin/bin
-    ln -sf $host/bin/host $dnsutils/bin
 
     for f in "$lib/lib/"*.la "$dev/bin/"{isc-config.sh,bind*-config}; do
       sed -i "$f" -e 's|-L${openssl.dev}|-L${openssl.out}|g'
@@ -54,11 +57,13 @@ stdenv.mkDerivation rec {
   '';
 
   meta = {
-    homepage = "http://www.isc.org/software/bind";
+    homepage = http://www.isc.org/software/bind;
     description = "Domain name server";
-    license = stdenv.lib.licenses.isc;
+    license = stdenv.lib.licenses.mpl20;
 
     maintainers = with stdenv.lib.maintainers; [viric peti];
     platforms = with stdenv.lib.platforms; unix;
+
+    outputsToInstall = [ "out" "dnsutils" "host" ];
   };
 }

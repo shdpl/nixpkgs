@@ -19,6 +19,7 @@ let
       glibc # needed for getent
       shadow
       nettools # needed for hostname
+      utillinux # needed for mount and mountpoint
     ];
 
 in
@@ -116,14 +117,7 @@ in
 
   config = {
 
-    system.activationScripts.stdio =
-      ''
-        # Needed by some programs.
-        ln -sfn /proc/self/fd /dev/fd
-        ln -sfn /proc/self/fd/0 /dev/stdin
-        ln -sfn /proc/self/fd/1 /dev/stdout
-        ln -sfn /proc/self/fd/2 /dev/stderr
-      '';
+    system.activationScripts.stdio = ""; # obsolete
 
     system.activationScripts.var =
       ''
@@ -168,12 +162,12 @@ in
           local options="$3"
           local fsType="$4"
 
-          if ${pkgs.utillinux}/bin/mountpoint -q "$mountPoint"; then
+          if mountpoint -q "$mountPoint"; then
             local options="remount,$options"
           else
             mkdir -m 0755 -p "$mountPoint"
           fi
-          ${pkgs.utillinux}/bin/mount -t "$fsType" -o "$options" "$device" "$mountPoint"
+          mount -t "$fsType" -o "$options" "$device" "$mountPoint"
         }
         source ${config.system.build.earlyMountScript}
       '';

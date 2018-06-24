@@ -1,15 +1,19 @@
 { stdenv, fetchurl, autoreconfHook, pkgconfig, libxkbcommon, pango, which, git
 , cairo, glib, libxcb, xcbutil, xcbutilwm, xcbutilxrm, libstartup_notification
+, bison, flex, librsvg, check
 }:
 
 stdenv.mkDerivation rec {
-  version = "1.3.0";
+  version = "1.5.0";
   name = "rofi-${version}";
 
   src = fetchurl {
-    url = "https://github.com/DaveDavenport/rofi/releases/download/${version}/${name}.tar.xz";
-    sha256 = "1a65ai93ygras5bi7wc0s5i3zqslzqlnw3klq3sdnp2p0d6hjjqn";
+    url = "https://github.com/DaveDavenport/rofi/releases/download/${version}/${name}.tar.gz";
+    sha256 = "0h068wqf0n6gmil2g3lh263pm7spkp4k5rxbnfp52n8izqgyf7al";
   };
+
+  # config.patch may be removed in the future - https://github.com/DaveDavenport/rofi/pull/781
+  patches = [ ./config.patch ];
 
   preConfigure = ''
     patchShebangs "script"
@@ -17,10 +21,16 @@ stdenv.mkDerivation rec {
     sed -i 's/~root/~nobody/g' test/helper-expand.c
   '';
 
-  buildInputs = [ autoreconfHook pkgconfig libxkbcommon pango cairo git
+  postFixup = ''
+    substituteInPlace "$out"/bin/rofi-theme-selector \
+        --replace "%ROFIOUT%" "$out/share"
+  '';
+
+  nativeBuildInputs = [ autoreconfHook pkgconfig ];
+  buildInputs = [ libxkbcommon pango cairo git bison flex librsvg check
     libstartup_notification libxcb xcbutil xcbutilwm xcbutilxrm which
   ];
-  doCheck = true;
+  doCheck = false;
 
   meta = with stdenv.lib; {
     description = "Window switcher, run dialog and dmenu replacement";

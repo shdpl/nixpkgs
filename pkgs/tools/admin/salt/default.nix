@@ -1,5 +1,5 @@
 {
-  stdenv, fetchurl, python2Packages, openssl,
+  stdenv, python2Packages, openssl,
 
   # Many Salt modules require various Python modules to be installed,
   # passing them in this array enables Salt to find them.
@@ -7,19 +7,19 @@
 }:
 
 python2Packages.buildPythonApplication rec {
-  name = "salt-${version}";
-  version = "2016.3.3";
+  pname = "salt";
+  version = "2017.7.4";
 
-  src = fetchurl {
-    url = "mirror://pypi/s/salt/${name}.tar.gz";
-    sha256 = "1djjglnh6203y8dirziz5w6zh2lgszxp8ivi86nb7fgijj2h61jr";
+  src = python2Packages.fetchPypi {
+    inherit pname version;
+    sha256 = "15xfvclk3ns8vk17j7bfy4alq7ab5x3y3jnpqzp5583bfyak0mqx";
   };
 
   propagatedBuildInputs = with python2Packages; [
     futures
     jinja2
     markupsafe
-    msgpack
+    msgpack-python
     pycrypto
     pyyaml
     pyzmq

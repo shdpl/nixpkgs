@@ -23,7 +23,7 @@ stdenv.mkDerivation rec {
     homepage = http://www.cybercom.net/~dcoffin/dcraw/;
     description = "Decoder for many camera raw picture formats";
     license = stdenv.lib.licenses.free;
-    platforms = with stdenv.lib.platforms; allBut cygwin;
-    maintainers = [ stdenv.lib.maintainers.urkud ];
+    platforms = stdenv.lib.platforms.unix; # Once had cygwin problems
+    maintainers = [ ];
   };
 }

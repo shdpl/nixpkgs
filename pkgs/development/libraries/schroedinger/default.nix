@@ -19,9 +19,9 @@ stdenv.mkDerivation {
   doCheck = true;
 
   meta = with stdenv.lib; {
-    homepage = "http://diracvideo.org/";
+    homepage = http://diracvideo.org/;
     maintainers = [ maintainers.spwhitt ];
     license = [ licenses.mpl11 licenses.lgpl2 licenses.mit ];
-    platforms = platforms.unix;
+    platforms = platforms.linux;
   };
 }

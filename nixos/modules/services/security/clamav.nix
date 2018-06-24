@@ -76,11 +76,13 @@ in
     };
   };
 
-  config = mkIf cfg.updater.enable or cfg.daemon.enable {
+  config = mkIf (cfg.updater.enable || cfg.daemon.enable) {
     environment.systemPackages = [ pkg ];
+
     users.extraUsers = singleton {
       name = clamavUser;
       uid = config.ids.uids.clamav;
+      group = clamavGroup;
       description = "ClamAV daemon user";
       home = stateDir;
     };
@@ -93,10 +95,10 @@ in
     environment.etc."clamav/freshclam.conf".source = freshclamConfigFile;
     environment.etc."clamav/clamd.conf".source = clamdConfigFile;
 
-    systemd.services.clamav-daemon = mkIf cfg.daemon.enable {
+    systemd.services.clamav-daemon = optionalAttrs cfg.daemon.enable {
       description = "ClamAV daemon (clamd)";
-      after = mkIf cfg.updater.enable [ "clamav-freshclam.service" ];
-      requires = mkIf cfg.updater.enable [ "clamav-freshclam.service" ];
+      after = optional cfg.updater.enable "clamav-freshclam.service";
+      requires = optional cfg.updater.enable "clamav-freshclam.service";
       wantedBy = [ "multi-user.target" ];
       restartTriggers = [ clamdConfigFile ];
 
@@ -114,7 +116,7 @@ in
       };
     };
 
-    systemd.timers.clamav-freshclam = mkIf cfg.updater.enable {
+    systemd.timers.clamav-freshclam = optionalAttrs cfg.updater.enable {
       description = "Timer for ClamAV virus database updater (freshclam)";
       wantedBy = [ "timers.target" ];
       timerConfig = {
@@ -123,7 +125,7 @@ in
       };
     };
 
-    systemd.services.clamav-freshclam = mkIf cfg.updater.enable {
+    systemd.services.clamav-freshclam = optionalAttrs cfg.updater.enable {
       description = "ClamAV virus database updater (freshclam)";
       restartTriggers = [ freshclamConfigFile ];
 

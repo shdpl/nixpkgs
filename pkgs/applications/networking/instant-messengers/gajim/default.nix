@@ -1,17 +1,17 @@
-{ stdenv, fetchurl, python, intltool, pkgconfig, libX11
+{ stdenv, fetchurl, autoreconfHook, python, intltool, pkgconfig, libX11
 , ldns, pythonPackages
 
-, enableJingle ? true, farstream ? null, gst_plugins_bad ? null
+, enableJingle ? true, farstream ? null, gst-plugins-bad ? null
 ,                      libnice ? null
 , enableE2E ? true
 , enableRST ? true
 , enableSpelling ? true, gtkspell2 ? null
 , enableNotifications ? false
-, enableOmemoPluginDependencies ? false
+, enableOmemoPluginDependencies ? true
 , extraPythonPackages ? pkgs: []
 }:
 
-assert enableJingle -> farstream != null && gst_plugins_bad != null
+assert enableJingle -> farstream != null && gst-plugins-bad != null
                     && libnice != null;
 assert enableE2E -> pythonPackages.pycrypto != null;
 assert enableRST -> pythonPackages.docutils != null;
@@ -22,20 +22,41 @@ with stdenv.lib;
 
 stdenv.mkDerivation rec {
   name = "gajim-${version}";
-  version = "0.16.6";
+  majorVersion = "0.16";
+  version = "${majorVersion}.9";
 
   src = fetchurl {
-    url = "http://www.gajim.org/downloads/0.16/gajim-${version}.tar.bz2";
-    sha256 = "1p3qwzy07f0wkika9yigyiq167l2k6wn12flqa7x55z4ihbysmqk";
+    name = "${name}.tar.bz2";
+    url = "https://dev.gajim.org/gajim/gajim/repository/archive.tar.bz2?"
+        + "ref=${name}";
+    sha256 = "121dh906zya9n7npyk7b5xama0z3ycy9jl7l5jm39pc86h1winh3";
   };
 
-  patches = [
-    (fetchurl {
-      name = "gajim-icon-index.patch";
-      url = "http://hg.gajim.org/gajim/raw-rev/b9ec78663dfb";
-      sha256 = "0w54hr5dq9y36val55kmh8d6cid7h4fs2nghx09714jylz2nyxxv";
-    })
-  ];
+  # Needed for Plugin Installer
+  release = fetchurl {
+    url = "https://gajim.org/downloads/${majorVersion}/gajim-${version}.tar.bz2";
+    sha256 = "0v08zdvpqaig0wxpxn1l8rsj3wr3fqvnagn8cnvch17vfqv9gcr1";
+  };
+
+  postUnpack = ''
+    tar -xaf $release
+    cp -r ${name}/plugins/plugin_installer gajim-${name}-*/plugins
+    rm -rf ${name}
+  '';
+
+  patches = let
+    # An attribute set of revisions to apply from the upstream repository.
+    cherries = {
+      #example-fix = {
+      #  rev = "<replace-with-git-revsion>";
+      #  sha256 = "<replace-with-sha256>";
+      #};
+    };
+  in (mapAttrsToList (name: { rev, sha256 }: fetchurl {
+    name = "gajim-${name}.patch";
+    url = "https://dev.gajim.org/gajim/gajim/commit/${rev}.diff";
+    inherit sha256;
+  }) cherries);
 
   postPatch = ''
     sed -i -e '0,/^[^#]/ {
@@ -44,9 +65,13 @@ stdenv.mkDerivation rec {
         }$GST_PLUGIN_PATH"'"
     }' scripts/gajim.in
 
-    sed -i -e 's/return helpers.is_in_path('"'"'drill.*/return True/' \
-      src/features_window.py
-    sed -i -e "s|'drill'|'${ldns}/bin/drill'|" src/common/resolver.py
+    # requires network access
+    echo "" > test/integration/test_resolver.py
+
+    # We want to run tests in installCheckPhase rather than checkPhase to test
+    # whether the *installed* version of Gajim works rather than just whether it
+    # works in the unpacked source tree.
+    sed -i -e '/sys\.path\.insert.*gajim_root.*\/src/d' test/lib/__init__.py
   '' + optionalString enableSpelling ''
     sed -i -e 's|=.*find_lib.*|= "${gtkspell2}/lib/libgtkspell.so"|'   \
       src/gtkspell.py
@@ -54,18 +79,23 @@ stdenv.mkDerivation rec {
 
   buildInputs = [
     python libX11
-  ] ++ optionals enableJingle [ farstream gst_plugins_bad libnice ];
+  ] ++ optionals enableJingle [ farstream gst-plugins-bad libnice ];
 
   nativeBuildInputs = [
-    pythonPackages.wrapPython intltool pkgconfig
+    autoreconfHook pythonPackages.wrapPython intltool pkgconfig
   ];
 
-  propagatedBuildInputs = [
-    pythonPackages.pygobject2 pythonPackages.pyGtkGlade
-    pythonPackages.pyasn1
-    pythonPackages.pyxdg
-    pythonPackages.nbxmpp
-    pythonPackages.pyopenssl pythonPackages.dbus-python
+  autoreconfPhase = ''
+    sed -e 's/which/type -P/;s,\./configure,:,' autogen.sh | bash
+  '';
+
+  propagatedBuildInputs = with pythonPackages; [
+    libasyncns
+    pygobject2 pyGtkGlade
+    pyasn1
+    pyxdg
+    nbxmpp
+    pyopenssl dbus-python
   ] ++ optional enableE2E pythonPackages.pycrypto
     ++ optional enableRST pythonPackages.docutils
     ++ optional enableNotifications pythonPackages.notify
@@ -89,10 +119,16 @@ stdenv.mkDerivation rec {
     done
   '';
 
+  doInstallCheck = true;
+  installCheckPhase = ''
+    PYTHONPATH="test:$out/share/gajim/src:''${PYTHONPATH:+:}$PYTHONPATH" \
+      make test_nogui
+  '';
+
   enableParallelBuilding = true;
 
   meta = {
-    homepage = "http://gajim.org/";
+    homepage = http://gajim.org/;
     description = "Jabber client written in PyGTK";
     license = licenses.gpl3Plus;
     maintainers = [ maintainers.raskin maintainers.aszlig ];

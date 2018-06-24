@@ -1,4 +1,4 @@
-{ stdenv, buildEnv, fetchgit, fetchurl, makeWrapper, bundlerEnv, bundler
+{ stdenv, fetchgit, fetchurl, makeWrapper, bundlerEnv, bundler
 , ruby, libxslt, libxml2, sqlite, openssl, docker
 , dataDir ? "/var/lib/panamax-api" }@args:
 
@@ -11,9 +11,7 @@ stdenv.mkDerivation rec {
   env = bundlerEnv {
     name = "panamax-api-gems-${version}";
     inherit ruby;
-    gemset = ./gemset.nix;
-    gemfile = ./Gemfile;
-    lockfile = ./Gemfile.lock;
+    gemdir = ./.;
   };
 
   bundler = args.bundler.override { inherit ruby; };
@@ -66,6 +64,7 @@ stdenv.mkDerivation rec {
   '';
 
   meta = with stdenv.lib; {
+    broken = true; # needs ruby 2.1
     homepage = https://github.com/CenturyLinkLabs/panamax-api;
     description = "The API behind The Panamax UI";
     license = licenses.asl20;

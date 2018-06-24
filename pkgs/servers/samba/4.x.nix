@@ -1,7 +1,7 @@
 { lib, stdenv, fetchurl, python, pkgconfig, perl, libxslt, docbook_xsl
 , docbook_xml_dtd_42, docbook_xml_dtd_45, readline, talloc
 , popt, iniparser, libbsd, libarchive, libiconv, gettext
-, kerberos, zlib, openldap, cups, pam, avahi, acl, libaio, fam, libceph, glusterfs
+, krb5Full, zlib, openldap, cups, pam, avahi, acl, libaio, fam, libceph, glusterfs
 , gnutls, libgcrypt, libgpgerror
 , ncurses, libunwind, libibverbs, librdmacm, systemd
 
@@ -19,23 +19,25 @@ with lib;
 
 stdenv.mkDerivation rec {
   name = "samba-${version}";
-  version = "4.5.3";
+  version = "4.7.6";
 
   src = fetchurl {
     url = "mirror://samba/pub/samba/stable/${name}.tar.gz";
-    sha256 = "1jif95684swssqwp9v3i2r08cn3r2iddf6ly68db4wmvl5ac8vgh";
+    sha256 = "0vkxqp3wh7bpn1fd45lznmrpn2ma1fq75yq28vi08rggr07y7v8y";
   };
 
   outputs = [ "out" "dev" "man" ];
 
   patches =
     [ ./4.x-no-persistent-install.patch
+      ./patch-source3__libads__kerberos_keytab.c.patch
+      ./4.x-no-persistent-install-dynconfig.patch
     ];
 
   buildInputs =
     [ python pkgconfig perl libxslt docbook_xsl docbook_xml_dtd_42 /*
       docbook_xml_dtd_45 */ readline talloc popt iniparser
-      libbsd libarchive zlib acl fam libiconv gettext libunwind kerberos
+      libbsd libarchive zlib acl fam libiconv gettext libunwind krb5Full
     ]
     ++ optionals stdenv.isLinux [ libaio pam systemd ]
     ++ optionals (enableInfiniband && stdenv.isLinux) [ libibverbs librdmacm ]
@@ -59,6 +61,7 @@ stdenv.mkDerivation rec {
     [ "--with-static-modules=NONE"
       "--with-shared-modules=ALL"
       "--with-system-mitkrb5"
+      "--with-system-mitkdc" "${krb5Full}"
       "--enable-fhs"
       "--sysconfdir=/etc"
       "--localstatedir=/var"
@@ -66,7 +69,8 @@ stdenv.mkDerivation rec {
     ++ optional (!enableDomainController) "--without-ad-dc"
     ++ optionals (!enableLDAP) [ "--without-ldap" "--without-ads" ];
 
-  enableParallelBuilding = true;
+  # To build in parallel.
+  buildPhase = "python buildtools/bin/waf build -j $NIX_BUILD_CORES";
 
   # Some libraries don't have /lib/samba in RPATH but need it.
   # Use find -type f -executable -exec echo {} \; -exec sh -c 'ldd {} | grep "not found"' \;

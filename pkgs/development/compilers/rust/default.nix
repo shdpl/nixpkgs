@@ -1,35 +1,41 @@
-{ stdenv, callPackage, recurseIntoAttrs, makeRustPlatform,
-  targets ? [], targetToolchains ? [], targetPatches ? [] }:
+{ stdenv, callPackage, recurseIntoAttrs, makeRustPlatform, llvm, fetchurl
+, targets ? []
+, targetToolchains ? []
+, targetPatches ? []
+}:
 
 let
   rustPlatform = recurseIntoAttrs (makeRustPlatform (callPackage ./bootstrap.nix {}));
-in
-
-rec {
+  version = "1.24.0";
+  cargoVersion = "0.24.0";
+  src = fetchurl {
+    url = "https://static.rust-lang.org/dist/rustc-${version}-src.tar.gz";
+    sha256 = "17v3jpyky8vkkgai5yd2zr8zl87qpgj6dx99gx27x1sf0kv7d0mv";
+  };
+in rec {
   rustc = callPackage ./rustc.nix {
-    shortVersion = "1.14";
-    isRelease = true;
-    forceBundledLLVM = false;
+    inherit stdenv llvm targets targetPatches targetToolchains rustPlatform version src;
+
+    forceBundledLLVM = true;
+
     configureFlags = [ "--release-channel=stable" ];
-    srcRev = "e8a0123241f0d397d39cd18fcc4e5e7edde22730";
-    srcSha = "1sla3gnx9dqvivnyhvwz299mc3jmdy805q2y5xpmpi1vhfk0bafx";
+
+    # 1. Upstream is not running tests on aarch64:
+    # see https://github.com/rust-lang/rust/issues/49807#issuecomment-380860567
+    # So we do the same.
+    # 2. Tests run out of memory for i686
+    doCheck = !stdenv.isAarch64 && !stdenv.isi686;
 
     patches = [
-      ./patches/disable-lockfile-check-stable.patch
+      ./patches/0001-Disable-fragile-tests-libstd-net-tcp-on-Darwin-Linux.patch
     ] ++ stdenv.lib.optional stdenv.needsPax ./patches/grsec.patch;
 
-    inherit targets;
-    inherit targetPatches;
-    inherit targetToolchains;
-    inherit rustPlatform;
   };
 
   cargo = callPackage ./cargo.nix rec {
-    version = "0.15.0";
-    srcRev = "298a0127f703d4c2500bb06d309488b92ef84ae1";
-    srcSha = "0v74r18vszapw2rfk7w72czkp9gbq4s1sggphm5vx0kyh058dxc5";
-    depsSha256 = "0ksiywli8r4lkprfknm0yz1w27060psi3db6wblqmi8sckzdm44h";
-
+    version = cargoVersion;
+    inherit src;
+    inherit stdenv;
     inherit rustc; # the rustc that will be wrapped by cargo
     inherit rustPlatform; # used to build cargo
   };

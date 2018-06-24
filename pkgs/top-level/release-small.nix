@@ -1,8 +1,8 @@
 /* A small release file, with few packages to be built.  The aim is to reduce
    the load on Hydra when testing the `stdenv-updates' branch. */
 
-{ nixpkgs ? { outPath = (import ../.. {}).lib.cleanSource ../..; revCount = 1234; shortRev = "abcdef"; }
-, supportedSystems ? [ "x86_64-linux" "i686-linux" "x86_64-darwin" ]
+{ nixpkgs ? { outPath = (import ../../lib).cleanSource ../..; revCount = 1234; shortRev = "abcdef"; }
+, supportedSystems ? [ "x86_64-linux" "x86_64-darwin" ]
 }:
 
 with import ./release-lib.nix { inherit supportedSystems; };
@@ -19,10 +19,9 @@ with import ./release-lib.nix { inherit supportedSystems; };
   aspell = all;
   at = linux;
   atlas = linux;
-  aterm25 = all;
   autoconf = all;
   automake = all;
-  avahi = allBut cygwin;  # Cygwin builds fail
+  avahi = unix; # Cygwin builds fail
   bash = all;
   bashInteractive = all;
   bc = all;
@@ -36,6 +35,7 @@ with import ./release-lib.nix { inherit supportedSystems; };
   cpio = all;
   cron = linux;
   cups = linux;
+  dbus = linux;
   dhcp = linux;
   diffutils = all;
   e2fsprogs = linux;
@@ -54,7 +54,7 @@ with import ./release-lib.nix { inherit supportedSystems; };
   gnumake = all;
   gnupatch = all;
   gnupg = linux;
-  gnuplot = allBut cygwin;
+  gnuplot = unix; # Cygwin builds fail
   gnused = all;
   gnutar = all;
   gnutls = linux;
@@ -68,7 +68,7 @@ with import ./release-lib.nix { inherit supportedSystems; };
   hdparm = linux;
   hello = all;
   host = linux;
-  iana_etc = linux;
+  iana-etc = linux;
   icewm = linux;
   idutils = all;
   inetutils = linux;
@@ -127,20 +127,20 @@ with import ./release-lib.nix { inherit supportedSystems; };
   perl = all;
   pkgconfig = all;
   pmccabe = linux;
-  portmap = linux;
   procps = linux;
-  python = allBut cygwin;
+  python = unix; # Cygwin builds fail
   readline = all;
   rlwrap = all;
   rpm = linux;
+  rpcbind = linux;
   rsync = linux;
   screen = linux ++ darwin;
   scrot = linux;
   sdparm = linux;
   sharutils = all;
-  sloccount = allBut cygwin;
+  sloccount = unix; # Cygwin builds fail
   smartmontools = all;
-  sqlite = allBut cygwin;
+  sqlite = unix; # Cygwin builds fail
   squid = linux;
   ssmtp = linux;
   stdenv = all;
@@ -157,9 +157,8 @@ with import ./release-lib.nix { inherit supportedSystems; };
   time = linux;
   tinycc = linux;
   udev = linux;
-  unrar = linux;
+  unar = linux;
   unzip = all;
-  upstart = linux;
   usbutils = linux;
   utillinux = linux;
   utillinuxMinimal = linux;
@@ -175,11 +174,5 @@ with import ./release-lib.nix { inherit supportedSystems; };
   xkeyboard_config = linux;
   zile = linux;
   zip = all;
-
-  dbus = {
-    libs = linux;
-    daemon = linux;
-    tools = linux;
-  };
 
 } ))

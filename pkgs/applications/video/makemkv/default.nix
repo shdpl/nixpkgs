@@ -1,25 +1,26 @@
 { stdenv, fetchurl
-, openssl, qt4, mesa, zlib, pkgconfig, libav
+, openssl, qt4, libGLU_combined, zlib, pkgconfig, libav
 }:
 
 stdenv.mkDerivation rec {
   name = "makemkv-${ver}";
-  ver = "1.9.10";
+  ver = "1.10.8";
   builder = ./builder.sh;
 
   src_bin = fetchurl {
     url = "http://www.makemkv.com/download/makemkv-bin-${ver}.tar.gz";
-    sha256 = "1i5nqk5gyin6rgvc0fy96pdzq0wsmfvsm6w9mfsibj0yrfqnhi6r";
+    sha256 = "b7861aa7b03203f50d2ce3130f805c4b0406d13aec597648050349fa8b084b29";
   };
 
   src_oss = fetchurl {
     url = "http://www.makemkv.com/download/makemkv-oss-${ver}.tar.gz";
-    sha256 = "1ypc2hisx71kpmjwxnlq6zh4q6r2i1p32gapb0ampjflcjyvx5dk";
+    sha256 = "d17cfd916a9bdda35b1065bce86a48a987caf9ffb4d6861609458f9f312603c7";
   };
 
-  buildInputs = [openssl qt4 mesa zlib pkgconfig libav];
+  nativeBuildInputs = [ pkgconfig ];
+  buildInputs = [openssl qt4 libGLU_combined zlib libav];
 
-  libPath = stdenv.lib.makeLibraryPath [stdenv.cc.cc openssl mesa qt4 zlib ]
+  libPath = stdenv.lib.makeLibraryPath [stdenv.cc.cc openssl libGLU_combined qt4 zlib ]
           + ":" + stdenv.cc.cc + "/lib64";
 
   meta = with stdenv.lib; {

@@ -1,119 +1,71 @@
-{ bash
-, buildFHSUserEnv
-, coreutils
-, fetchurl
-, findutils
-, file
-, git
-, glxinfo
-, gnugrep
-, gnutar
-, gzip
-, jdk
-, fontconfig
-, freetype
-, libpulseaudio
-, libX11
-, libXext
-, libXi
-, libXrandr
-, libXrender
-, libXtst
-, makeWrapper
-, pciutils
-, pkgsi686Linux
-, setxkbmap
-, stdenv
-, unzip
-, which
-, writeTextFile
-, xkeyboard_config
-, zlib
-}:
-
+{ stdenv, callPackage, fetchurl, makeFontsConf, gnome2 }:
 let
-
-  version = "2.2.3.0";
-  build = "145.3537739";
-
-  androidStudio = stdenv.mkDerivation {
-    name = "android-studio";
-    buildInputs = [
-      makeWrapper
-      unzip
-    ];
-    installPhase = ''
-      cp -r . $out
-      wrapProgram $out/bin/studio.sh --set PATH "${stdenv.lib.makeBinPath [
-
-        # Checked in studio.sh
-        coreutils
-        findutils
-        gnugrep
-        jdk
-        which
-
-        # For Android emulator
-        file
-        glxinfo
-        pciutils
-        setxkbmap
-
-        # Used during setup wizard
-        gnutar
-        gzip
-
-        # Runtime stuff
-        git
-
-      ]}" --prefix LD_LIBRARY_PATH : "${stdenv.lib.makeLibraryPath [
-        # Gradle wants libstdc++.so.6
-        stdenv.cc.cc.lib
-        # mksdcard wants 32 bit libstdc++.so.6
-        pkgsi686Linux.stdenv.cc.cc.lib
-
-        # aapt wants libz.so.1
-        zlib
-        pkgsi686Linux.zlib
-        # Support multiple monitors
-        libXrandr
-
-        # For Android emulator
-        libpulseaudio
-        libX11
-        libXext
-        libXrender
-        libXtst
-        libXi
-        freetype
-        fontconfig
-      ]}" --set QT_XKB_CONFIG_ROOT "${xkeyboard_config}/share/X11/xkb"
-    '';
-    src = fetchurl {
-      url = "https://dl.google.com/dl/android/studio/ide-zips/${version}/android-studio-ide-${build}-linux.zip";
-      sha256 = "10fmffkvvbnmgjxb4rq7rjwnn16jp5phw6div4n7hh2ad6spf8wq";
+  mkStudio = opts: callPackage (import ./common.nix opts) {
+    fontsConf = makeFontsConf {
+      fontDirectories = [];
     };
-    meta = {
-      description = "The Official IDE for Android";
+    inherit (gnome2) GConf gnome_vfs;
+  };
+in rec {
+  # Old alias
+  preview = beta;
+
+  # Attributes are named by the channels
+
+  # linux-bundle
+  stable = mkStudio {
+    pname = "android-studio";
+    #pname = "android-studio-stable"; # TODO: Rename
+    version = "3.0.1.0"; # "Android Studio 3.0.1"
+    build = "171.4443003";
+    sha256Hash = "1krahlqr70nq3csqiinq2m4fgs68j11hd9gg2dx2nrpw5zni0wdd";
+
+    meta = with stdenv.lib; {
+      description = "The Official IDE for Android (stable channel)";
+      longDescription = ''
+        Android Studio is the official IDE for Android app development, based on
+        IntelliJ IDEA.
+      '';
       homepage = https://developer.android.com/studio/index.html;
-      license = stdenv.lib.licenses.asl20;
+      license = licenses.asl20;
       platforms = [ "x86_64-linux" ];
+      maintainers = with maintainers; [ primeos ];
     };
   };
 
-  # Android Studio downloads prebuilt binaries as part of the SDK. These tools
-  # (e.g. `mksdcard`) have `/lib/ld-linux.so.2` set as the interpreter. An FHS
-  # environment is used as a work around for that.
-  fhsEnv = buildFHSUserEnv {
-    name = "android-studio-fhs-env";
+  # linux-beta-bundle
+  beta = mkStudio {
+    pname = "android-studio-preview";
+    #pname = "android-studio-beta"; # TODO: Rename
+    version = "3.1.0.14"; # "Android Studio 3.1 RC 2"
+    build = "173.4640767";
+    sha256Hash = "00v8qbis4jm31v1g9989f9y15av6p3ywj8mmfxcsc3hjlpzdgid8";
+
+    meta = stable.meta // {
+      description = "The Official IDE for Android (beta channel)";
+      homepage = https://developer.android.com/studio/preview/index.html;
+    };
   };
 
-in writeTextFile {
-  name = "android-studio-${version}";
-  destination = "/bin/android-studio";
-  executable = true;
-  text = ''
-    #!${bash}/bin/bash
-    ${fhsEnv}/bin/android-studio-fhs-env ${androidStudio}/bin/studio.sh
-  '';
+  dev = mkStudio {
+    pname = "android-studio-dev";
+    version = "3.2.0.5"; # "Android Studio 3.2 Canary 6"
+    build = "173.4640885";
+    sha256Hash = "1fbjk1dhvi975dm09s9iz9ja53fjqca07nw5h068gdj3358pj3k8";
+
+    meta = beta.meta // {
+      description = "The Official IDE for Android (dev channel)";
+    };
+  };
+
+  canary = mkStudio {
+    pname = "android-studio-canary";
+    version = "3.2.0.5"; # "Android Studio 3.2 Canary 6"
+    build = "173.4640885";
+    sha256Hash = "1fbjk1dhvi975dm09s9iz9ja53fjqca07nw5h068gdj3358pj3k8";
+
+    meta = beta.meta // {
+      description = "The Official IDE for Android (canary channel)";
+    };
+  };
 }

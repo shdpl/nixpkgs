@@ -1,4 +1,4 @@
-{ stdenv, fetchurl, libjpeg, libpng, libmng, lcms1, libtiff, openexr, mesa_noglu
+{ stdenv, fetchurl, libjpeg, libpng, libmng, lcms1, libtiff, openexr, libGL
 , libX11, pkgconfig, OpenGL
 }:
 
@@ -14,7 +14,7 @@ stdenv.mkDerivation rec {
 
   outputs = [ "out" "dev" ];
 
-  buildInputs = [ libjpeg libpng libmng lcms1 libtiff openexr mesa_noglu libX11 ]
+  buildInputs = [ libjpeg libpng libmng lcms1 libtiff openexr libGL libX11 ]
     ++ stdenv.lib.optionals stdenv.isDarwin [ OpenGL ];
   nativeBuildInputs = [ pkgconfig ];
 
@@ -47,6 +47,6 @@ stdenv.mkDerivation rec {
     description = "An image library which can can load, save, convert, manipulate, filter and display a wide variety of image formats";
     license = licenses.lgpl2;
     platforms = platforms.mesaPlatforms;
-    maintainers = [ maintainers.phreedom maintainers.urkud ];
+    maintainers = [ maintainers.phreedom ];
   };
 }

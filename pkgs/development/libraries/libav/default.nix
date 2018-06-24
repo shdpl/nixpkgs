@@ -1,4 +1,4 @@
-{ stdenv, fetchurl, pkgconfig, yasm, bzip2, zlib, perl
+{ stdenv, fetchurl, pkgconfig, yasm, bzip2, zlib, perl, bash
 , mp3Support    ? true,   lame      ? null
 , speexSupport  ? true,   speex     ? null
 , theoraSupport ? true,   libtheora ? null
@@ -13,11 +13,12 @@
 , SDL # only for avplay in $bin, adds nontrivial closure to it
 , enableGPL ? true # ToDo: some additional default stuff may need GPL
 , enableUnfree ? faacSupport
+, hostPlatform
 }:
 
 assert faacSupport -> enableUnfree;
 
-with { inherit (stdenv.lib) optional optionals hasPrefix; };
+let inherit (stdenv.lib) optional optionals hasPrefix; in
 
 /* ToDo:
     - more deps, inspiration: http://packages.ubuntu.com/raring/libav-tools
@@ -26,8 +27,10 @@ with { inherit (stdenv.lib) optional optionals hasPrefix; };
 
 let
   result = {
-    libav_0_8 = libavFun "0.8.17" "31ace2daeb8c105deed9cd3476df47318d417714";
-    libav_11  = libavFun  "11.8"  "y18hmrzy7jqq7h9ys54nrr4s49mkzsfh";
+    # e.g. https://libav.org/releases/libav-11.11.tar.xz.sha1
+    libav_0_8 = libavFun "0.8.21" "d858f65128dad0bac1a8c3a51e5cbb27a7c79b3f";
+    libav_11  = libavFun "11.12"  "61d5dcab5fde349834af193a572b12a5fd6a4d42";
+    libav_12  = libavFun "12.3"   "386c18c8b857f23dfcf456ce40370716130211d9";
   };
 
   libavFun = version : sha1 : stdenv.mkDerivation rec {
@@ -40,9 +43,13 @@ let
 
     patches = []
       ++ optional (vpxSupport && hasPrefix "0.8." version) ./vpxenc-0.8.17-libvpx-1.5.patch
-      ++ optional (vpxSupport && hasPrefix "11."  version) ./vpxenc-11.6-libvpx-1.5.patch;
+      ;
 
-    preConfigure = "patchShebangs doc/texi2pod.pl";
+    postPatch = ''
+      patchShebangs .
+      # another shebang was hidden in a here document text
+      substituteInPlace ./configure --replace "#! /bin/sh" "#!${bash}/bin/sh"
+    '';
 
     configureFlags =
       assert stdenv.lib.all (x: x!=null) buildInputs;
@@ -68,7 +75,8 @@ let
       ++ optional freetypeSupport "--enable-libfreetype"
       ;
 
-    buildInputs = [ pkgconfig lame yasm zlib bzip2 SDL ]
+  nativeBuildInputs = [ pkgconfig perl ];
+    buildInputs = [ lame yasm zlib bzip2 SDL bash ]
       ++ [ perl ] # for install-man target
       ++ optional mp3Support lame
       ++ optional speexSupport speex
@@ -91,6 +99,7 @@ let
     # alltools to build smaller tools, incl. aviocat, ismindex, qt-faststart, etc.
     buildFlags = "all alltools install-man";
 
+
     postInstall = ''
       moveToOutput bin "$bin"
       # alltools target compiles an executable in tools/ for every C
@@ -104,24 +113,23 @@ let
     installCheckTarget = "check"; # tests need to be run *after* installation
 
     crossAttrs = {
-      dontSetConfigureCross = true;
+      configurePlatforms = [];
       configureFlags = configureFlags ++ [
-        "--cross-prefix=${stdenv.cross.config}-"
+        "--cross-prefix=${stdenv.cc.targetPrefix}"
         "--enable-cross-compile"
         "--target_os=linux"
-        "--arch=${stdenv.cross.arch}"
+        "--arch=${hostPlatform.parsed.cpu.name}"
         ];
     };
 
     passthru = { inherit vdpauSupport; };
 
     meta = with stdenv.lib; {
-      homepage = http://libav.org/;
+      homepage = https://libav.org/;
       description = "A complete, cross-platform solution to record, convert and stream audio and video (fork of ffmpeg)";
       license = with licenses; if enableUnfree then unfree #ToDo: redistributable or not?
         else if enableGPL then gpl2Plus else lgpl21Plus;
       platforms = with platforms; linux ++ darwin;
-      maintainers = [ maintainers.vcunat ];
     };
   }; # libavFun
 

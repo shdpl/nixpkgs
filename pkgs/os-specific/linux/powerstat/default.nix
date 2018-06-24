@@ -2,10 +2,10 @@
 
 stdenv.mkDerivation rec {
   name = "powerstat-${version}";
-  version = "0.02.10";
+  version = "0.02.15";
   src = fetchurl {
     url = "http://kernel.ubuntu.com/~cking/tarballs/powerstat/powerstat-${version}.tar.gz";
-    sha256 = "11n2k20h27j7m8j0l524w23xlkjhapsb3ml1qpx1si7gf0pkglcl";
+    sha256 = "0m8662qv77nzbwkdpydiz87kd75cjjajgp30j6mc5padyw65bxxx";
   };
   installFlags = [ "DESTDIR=$(out)" ];
   postInstall = ''

@@ -6,7 +6,7 @@ let
   cfg = config.services.transmission;
   apparmor = config.security.apparmor.enable;
 
-  homeDir = "/var/lib/transmission";
+  homeDir = cfg.home;
   downloadDir = "${homeDir}/Downloads";
   incompleteDir = "${homeDir}/.incomplete";
 
@@ -15,8 +15,7 @@ let
 
   # Strings must be quoted, ints and bools must not (for settings.json).
   toOption = x:
-    if x == true then "true"
-    else if x == false then "false"
+    if isBool x then boolToString x
     else if isInt x then toString x
     else toString ''"${x}"'';
 
@@ -60,8 +59,8 @@ in
           time the service starts). String values must be quoted, integer and
           boolean values must not.
 
-          See https://trac.transmissionbt.com/wiki/EditConfigFiles for
-          documentation.
+          See https://github.com/transmission/transmission/wiki/Editing-Configuration-Files
+          for documentation.
         '';
       };
 
@@ -69,6 +68,14 @@ in
         type = types.int;
         default = 9091;
         description = "TCP port number to run the RPC/web interface.";
+      };
+
+      home = mkOption {
+        type = types.path;
+        default = "/var/lib/transmission";
+        description = ''
+          The directory where transmission will create files.
+        '';
       };
     };
   };

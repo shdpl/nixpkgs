@@ -1,4 +1,5 @@
-{stdenv, fetchgit, perl, yasm
+{ stdenv, fetchgit, perl, yasm
+, hostPlatform
 , vp8DecoderSupport ? true # VP8 decoder
 , vp8EncoderSupport ? true # VP8 encoder
 , vp9DecoderSupport ? true # VP9 decoder
@@ -42,11 +43,11 @@
 }:
 
 let
-  inherit (stdenv) isi686 isx86_64 isArm is64bit isMips isDarwin isCygwin;
+  inherit (stdenv) isi686 isx86_64 isAarch32 is64bit isMips isDarwin isCygwin;
   inherit (stdenv.lib) enableFeature optional optionals;
 in
 
-assert isi686 || isx86_64 || isArm || isMips; # Requires ARM with floating point support
+assert isi686 || isx86_64 || isAarch32 || isMips; # Requires ARM with floating point support
 
 assert vp8DecoderSupport || vp8EncoderSupport || vp9DecoderSupport || vp9EncoderSupport;
 assert internalStatsSupport && (vp9DecoderSupport || vp9EncoderSupport) -> postprocSupport;
@@ -152,11 +153,8 @@ stdenv.mkDerivation rec {
 
   postInstall = ''moveToOutput bin "$bin" '';
 
-  crossAttrs = let
-    isCygwin = stdenv.cross.libc == "msvcrt";
-    isDarwin = stdenv.cross.libc == "libSystem";
-  in {
-    dontSetConfigureCross = true;
+  crossAttrs = {
+    configurePlatforms = [];
     configureFlags = configureFlags ++ [
       #"--extra-cflags="
       #"--prefix="
@@ -166,17 +164,17 @@ stdenv.mkDerivation rec {
       # libvpx darwin targets include darwin version (ie. ARCH-darwinXX-gcc, XX being the darwin version)
       # See all_platforms: https://github.com/webmproject/libvpx/blob/master/configure
       # Darwin versions: 10.4=8, 10.5=9, 10.6=10, 10.7=11, 10.8=12, 10.9=13, 10.10=14
-      "--force-target=${stdenv.cross.config}${(
-              if isDarwin then (
-                if      stdenv.cross.osxMinVersion == "10.10" then "14"
-                else if stdenv.cross.osxMinVersion == "10.9"  then "13"
-                else if stdenv.cross.osxMinVersion == "10.8"  then "12"
-                else if stdenv.cross.osxMinVersion == "10.7"  then "11"
-                else if stdenv.cross.osxMinVersion == "10.6"  then "10"
-                else if stdenv.cross.osxMinVersion == "10.5"  then "9"
-                else "8")
-              else "")}-gcc"
-      (if isCygwin then "--enable-static-msvcrt" else "")
+      "--force-target=${hostPlatform.config}${
+              if hostPlatform.isDarwin then
+                if      hostPlatform.osxMinVersion == "10.10" then "14"
+                else if hostPlatform.osxMinVersion == "10.9"  then "13"
+                else if hostPlatform.osxMinVersion == "10.8"  then "12"
+                else if hostPlatform.osxMinVersion == "10.7"  then "11"
+                else if hostPlatform.osxMinVersion == "10.6"  then "10"
+                else if hostPlatform.osxMinVersion == "10.5"  then "9"
+                else "8"
+              else ""}-gcc"
+      (if hostPlatform.isCygwin then "--enable-static-msvcrt" else "")
     ];
   };
 

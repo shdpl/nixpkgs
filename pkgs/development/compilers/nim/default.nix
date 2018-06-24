@@ -1,32 +1,60 @@
-{ stdenv, lib, fetchurl, makeWrapper, gcc }:
+{ stdenv, lib, fetchurl, makeWrapper, nodejs, openssl, pcre, readline, sqlite }:
 
 stdenv.mkDerivation rec {
   name = "nim-${version}";
-  version = "0.15.2";
+  version = "0.17.2";
 
   src = fetchurl {
-    url = "http://nim-lang.org/download/${name}.tar.xz";
-    sha256 = "12pyzjx7x4hclzrf3zf6r1qjlp60bzsaqrz0rax2rak2c8qz4pch";
+    url = "https://nim-lang.org/download/${name}.tar.xz";
+    sha256 = "1gc2xk3ygmz9y4pm75pligssgw995a7gvnfpy445fjpw4d81pzxa";
   };
 
-  buildInputs  = [ makeWrapper ];
+  doCheck = true;
 
-  buildPhase   = "sh build.sh";
+  enableParallelBuilding = true;
 
-  installPhase =
-    ''
-      install -Dt "$out/bin" bin/nim
-      substituteInPlace install.sh --replace '$1/nim' "$out"
-      sh install.sh $out
-      wrapProgram $out/bin/nim \
-        --suffix PATH : ${lib.makeBinPath [ gcc ]}
-    '';
+  NIX_LDFLAGS = [
+    "-lcrypto"
+    "-lpcre"
+    "-lreadline"
+    "-lsqlite3"
+  ];
 
-  meta = with stdenv.lib;
-    { description = "Statically typed, imperative programming language";
-      homepage = http://nim-lang.org/;
-      license = licenses.mit;
-      maintainers = with maintainers; [ ehmry peterhoeg ];
-      platforms = platforms.linux ++ platforms.darwin; # arbitrary
-    };
+  # 1. nodejs is only needed for tests
+  # 2. we could create a separate derivation for the "written in c" version of nim
+  #    used for bootstrapping, but koch insists on moving the nim compiler around
+  #    as part of building it, so it cannot be read-only
+
+  buildInputs  = [
+    makeWrapper nodejs
+    openssl pcre readline sqlite
+  ];
+
+  buildPhase   = ''
+    sh build.sh
+    ./bin/nim c koch
+    ./koch boot  -d:release \
+                 -d:useGnuReadline \
+                 ${lib.optionals (stdenv.isDarwin || stdenv.isLinux) "-d:nativeStacktrace"}
+    ./koch tools -d:release
+  '';
+
+  installPhase = ''
+    install -Dt $out/bin bin/* koch
+    ./koch install $out
+    mv $out/nim/bin/* $out/bin/ && rmdir $out/nim/bin
+    mv $out/nim/*     $out/     && rmdir $out/nim
+    wrapProgram $out/bin/nim \
+      --suffix PATH : ${lib.makeBinPath [ stdenv.cc ]}
+  '';
+
+  checkPhase = "./koch tests";
+
+  meta = with stdenv.lib; {
+    description = "Statically typed, imperative programming language";
+    homepage = https://nim-lang.org/;
+    license = licenses.mit;
+    maintainers = with maintainers; [ ehmry peterhoeg ];
+    platforms = with platforms; linux ++ darwin; # arbitrary
+  };
 }

@@ -1,4 +1,4 @@
-{ stdenv, fetchurl, pkgconfig, perl, python2, zip, libffi, nspr, icu, readline }:
+{ stdenv, fetchurl, pkgconfig, gnused_422, perl, python2, zip, libffi, nspr, icu, readline }:
 
 stdenv.mkDerivation rec {
   version = "31.5.0";
@@ -9,11 +9,12 @@ stdenv.mkDerivation rec {
   # probably it would be more ideal to pull a particular tag/revision
   # from the mercurial repo
   src = fetchurl {
-    url = "https://people.mozilla.org/~sstangl/mozjs-31.5.0.tar.bz2";
+    url = "https://people.freebsd.org/~sunpoet/sunpoet/mozjs-31.5.0.tar.bz2";
     sha256 = "1q8icql5hh1g3gzg5fp4rl9rfagyhm9gilfn3dgi7qn4i1mrfqsd";
   };
 
-  buildInputs = [ pkgconfig perl python2 zip libffi readline nspr icu ];
+  buildInputs = [ libffi readline nspr icu ];
+  nativeBuildInputs = [ pkgconfig perl python2 zip gnused_422 ];
 
   postUnpack = "sourceRoot=\${sourceRoot}/js/src";
 

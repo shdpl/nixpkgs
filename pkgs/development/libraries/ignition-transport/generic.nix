@@ -9,7 +9,8 @@ stdenv.mkDerivation rec {
   name = "ign-transport-${version}";
   inherit src;
 
-  buildInputs = [ cmake protobuf zeromq pkgconfig
+  nativeBuildInputs = [ pkgconfig ];
+  buildInputs = [ cmake protobuf zeromq
     utillinux # we need utillinux/e2fsprogs uuid/uuid.h
   ];
 
@@ -25,5 +26,6 @@ stdenv.mkDerivation rec {
     license = licenses.asl20;
     maintainers = with maintainers; [ pxc ];
     platforms = platforms.all;
+    broken = true; # 2018-04-10
   };
 }

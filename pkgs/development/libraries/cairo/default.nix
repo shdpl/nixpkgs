@@ -2,28 +2,21 @@
 , libintlOrEmpty, expat, zlib, libpng, pixman, fontconfig, freetype, xorg
 , gobjectSupport ? true, glib
 , xcbSupport ? true # no longer experimental since 1.12
-, glSupport ? true, mesa_noglu ? null # mesa is no longer a big dependency
+, glSupport ? true, libGL ? null # libGLU_combined is no longer a big dependency
 , pdfSupport ? true
 , darwin
 }:
 
-assert glSupport -> mesa_noglu != null;
+assert glSupport -> libGL != null;
 
-with { inherit (stdenv.lib) optional optionals; };
+let inherit (stdenv.lib) optional optionals; in
 
 stdenv.mkDerivation rec {
-  name = "cairo-1.14.8";
+  name = "cairo-1.14.10";
 
   src = fetchurl {
     url = "http://cairographics.org/releases/${name}.tar.xz";
-    sha1 = "c6f7b99986f93c9df78653c3e6a3b5043f65145e";
-  };
-
-  infinality = fetchFromGitHub {
-    owner = "bohoomil";
-    repo = "fontconfig-ultimate";
-    rev = "730f5e77580677e86522c1f2119aa78803741759";
-    sha256 = "1hbrdpm6xcczs2c2iid7by8h7dsd0jcf7an88s150njyqnjzxjg7";
+    sha256 = "02banr0wxckq62nbhc3mqidfdh2q956i2r7w2hd9bjgjb238g1vy";
   };
 
   patches = [
@@ -35,10 +28,6 @@ stdenv.mkDerivation rec {
     })
   ];
 
-  prePatch = ''
-    patches="$patches $(echo $infinality/*_cairo-iu/*.patch)"
-  '';
-
   outputs = [ "out" "dev" "devdoc" ];
   outputBin = "dev"; # very small
 
@@ -47,6 +36,7 @@ stdenv.mkDerivation rec {
     libiconv
   ] ++ libintlOrEmpty ++ optionals stdenv.isDarwin (with darwin.apple_sdk.frameworks; [
     CoreGraphics
+    CoreText
     ApplicationServices
     Carbon
   ]);
@@ -55,7 +45,7 @@ stdenv.mkDerivation rec {
     with xorg; [ libXext fontconfig expat freetype pixman zlib libpng libXrender ]
     ++ optionals xcbSupport [ libxcb xcbutil ]
     ++ optional gobjectSupport glib
-    ++ optional glSupport mesa_noglu
+    ++ optional glSupport libGL
     ; # TODO: maybe liblzo but what would it be for here?
 
   configureFlags = if stdenv.isDarwin then [

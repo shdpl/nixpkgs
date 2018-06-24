@@ -1,14 +1,30 @@
 { stdenv, fetchurl, pkgconfig, libevent, openssl, zlib, torsocks
 , libseccomp, systemd, libcap
+
+# for update.nix
+, writeScript
+, runCommand
+, common-updater-scripts
+, bash
+, coreutils
+, curl
+, gnugrep
+, gnupg
+, gnused
+, nix
 }:
 
 stdenv.mkDerivation rec {
-  name = "tor-0.2.8.12";
+  name = "tor-0.3.2.10";
 
   src = fetchurl {
-    url = "https://archive.torproject.org/tor-package-archive/${name}.tar.gz";
-    sha256 = "1bsagy4gcf6hgq04q949hv45ljb36j3ylxxn22cwxy4whgr4hmxk";
+    url = "https://dist.torproject.org/${name}.tar.gz";
+    sha256 = "1vnb2wkcmm8rnz0fqi3k7arl60mpycs8rjn8hvbgv56g3p1pgpv0";
   };
+
+  outputs = [ "out" "geoip" ];
+
+  enableParallelBuilding = true;
 
   nativeBuildInputs = [ pkgconfig ];
   buildInputs = [ libevent openssl zlib ] ++
@@ -22,9 +38,29 @@ stdenv.mkDerivation rec {
       --replace 'exec torsocks' 'exec ${torsocks}/bin/torsocks'
   '';
 
-  # Fails in a sandboxed environment; at some point we want to disable
-  # just the tests that require networking.
-  doCheck = false;
+  postInstall = ''
+    mkdir -p $geoip/share/tor
+    mv $out/share/tor/geoip{,6} $geoip/share/tor
+    rm -rf $out/share/tor
+  '';
+
+  doCheck = true;
+
+  passthru.updateScript = import ./update.nix {
+    inherit (stdenv) lib;
+    inherit
+      writeScript
+      runCommand
+      common-updater-scripts
+      bash
+      coreutils
+      curl
+      gnupg
+      gnugrep
+      gnused
+      nix
+    ;
+  };
 
   meta = with stdenv.lib; {
     homepage = https://www.torproject.org/;

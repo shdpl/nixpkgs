@@ -10,9 +10,7 @@ stdenv.mkDerivation rec {
   env = bundlerEnv {
     name = "panamax-ui-gems-${version}";
     inherit ruby;
-    gemset = ./gemset.nix;
-    gemfile = ./Gemfile;
-    lockfile = ./Gemfile.lock;
+    gemdir = ./.;
   };
 
   bundler = args.bundler.override { inherit ruby; };
@@ -64,6 +62,7 @@ stdenv.mkDerivation rec {
   '';
 
   meta = with stdenv.lib; {
+    broken = true; # needs ruby 2.1
     homepage = https://github.com/CenturyLinkLabs/panamax-ui;
     description = "The Web GUI for Panamax";
     license = licenses.asl20;

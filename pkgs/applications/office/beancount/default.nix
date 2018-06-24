@@ -1,13 +1,13 @@
 { stdenv, fetchhg, pkgs, pythonPackages }:
 
 pythonPackages.buildPythonApplication rec {
-  version = "2.0b12";
+  version = "2.0rc1";
   name = "beancount-${version}";
   namePrefix = "";
 
   src = pkgs.fetchurl {
     url = "mirror://pypi/b/beancount/${name}.tar.gz";
-    sha256 = "0n0wyi2yhmf8l46l5z68psk4rrzqkgqaqn93l0wnxsmp1nmqly9z";
+    sha256 = "12vlkck4q3dax9866krp6963c6d845b7inkkwrlkk4njh84n71wf";
   };
 
   buildInputs = with pythonPackages; [ nose ];

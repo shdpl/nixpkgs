@@ -13,14 +13,12 @@ stdenv.mkDerivation rec {
 
   nativeBuildInputs = [ flex ];
 
-  # Temporary work-around for problems after flex security update:
-  # https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=835542
-  NIX_CFLAGS_COMPILE = "-Wno-error=sign-compare";
-
   preBuild = ''
     makeFlagsArray+=("PREFIX=$out")
     makeFlagsArray+=("DESTDIR=$out")
   '';
+
+  NIX_CFLAGS_COMPILE = [ "-Wno-error=implicit-fallthrough" ];
 
   passthru = { inherit se_release se_url; };
 

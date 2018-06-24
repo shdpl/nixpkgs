@@ -1,35 +1,44 @@
-{ lib, allPackages
-, system, platform, crossSystem, config
+{ lib
+, localSystem, crossSystem, config, overlays
 }:
 
-rec {
-  vanillaStdenv = (import ../. {
-    inherit lib allPackages system platform;
+let
+  bootStages = import ../. {
+    inherit lib localSystem overlays;
     crossSystem = null;
     # Ignore custom stdenvs when cross compiling for compatability
     config = builtins.removeAttrs config [ "replaceStdenv" ];
-  }) // {
-    # Needed elsewhere as a hacky way to pass the target
-    cross = crossSystem;
   };
 
-  # For now, this is just used to build the native stdenv. Eventually, it should
-  # be used to build compilers and other such tools targeting the cross
-  # platform. Then, `forceNativeDrv` can be removed.
-  buildPackages = allPackages {
-    inherit system platform crossSystem config;
+in bootStages ++ [
+
+  # Build Packages
+  (vanillaPackages: {
+    inherit config overlays;
+    selfBuild = false;
+    stdenv =
+      assert vanillaPackages.hostPlatform == localSystem;
+      assert vanillaPackages.targetPlatform == localSystem;
+      vanillaPackages.stdenv.override { targetPlatform = crossSystem; };
     # It's OK to change the built-time dependencies
     allowCustomOverrides = true;
-    stdenv = vanillaStdenv;
-  };
+  })
 
-  stdenvCross = buildPackages.makeStdenvCross
-    buildPackages.stdenv crossSystem
-    buildPackages.binutilsCross buildPackages.gccCrossStageFinal;
+  # Run Packages
+  (buildPackages: {
+    inherit config overlays;
+    selfBuild = false;
+    stdenv = buildPackages.makeStdenvCross {
+      inherit (buildPackages) stdenv;
+      buildPlatform = localSystem;
+      hostPlatform = crossSystem;
+      targetPlatform = crossSystem;
+      cc = if crossSystem.useiOSCross or false
+             then buildPackages.darwin.ios-cross
+           else if crossSystem.useAndroidPrebuilt
+             then buildPackages.androidenv.androidndkPkgs.gcc
+           else buildPackages.gcc;
+    };
+  })
 
-  stdenvCrossiOS = let
-    inherit (buildPackages.darwin.ios-cross { prefix = crossSystem.config; inherit (crossSystem) arch; simulator = crossSystem.isiPhoneSimulator or false; }) cc binutils;
-  in buildPackages.makeStdenvCross
-    buildPackages.stdenv crossSystem
-    binutils cc;
-}
+]

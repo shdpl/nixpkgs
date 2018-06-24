@@ -100,11 +100,15 @@ stdenv.mkDerivation {
     fi
   '';
 
+  # 1. /buildATLAS/build/bin/ATLrun.sh: multiple segfaults.
+  # 2. "atlas does its own parallel builds"
+  enableParallelBuilding = false;
+
   meta = {
-    homepage = "http://math-atlas.sourceforge.net/";
+    homepage = http://math-atlas.sourceforge.net/;
     description = "Automatically Tuned Linear Algebra Software (ATLAS)";
     license = stdenv.lib.licenses.bsd3;
-    platforms = stdenv.lib.platforms.linux;
+    platforms = stdenv.lib.platforms.unix;
 
     longDescription = ''
       The ATLAS (Automatically Tuned Linear Algebra Software) project is an

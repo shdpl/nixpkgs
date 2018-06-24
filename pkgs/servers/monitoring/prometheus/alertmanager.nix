@@ -2,7 +2,7 @@
 
 buildGoPackage rec {
   name = "alertmanager-${version}";
-  version = "0.5.1";
+  version = "0.14.0";
   rev = "v${version}";
 
   goPackagePath = "github.com/prometheus/alertmanager";
@@ -11,20 +11,25 @@ buildGoPackage rec {
     inherit rev;
     owner = "prometheus";
     repo = "alertmanager";
-    sha256 = "1z0f8jqbd4v00634qcs41h1zb70ahl63svlzn33gavripk84hwzq";
+    sha256 = "0f6yi19zffxnp3dlr4zs52b7bllks3kjxkdn9zvvi5lvpkzmba5j";
   };
 
   # Tests exist, but seem to clash with the firewall.
   doCheck = false;
 
-  buildFlagsArray = let t = "${goPackagePath}/version"; in ''
+  buildFlagsArray = let t = "${goPackagePath}/vendor/github.com/prometheus/common/version"; in ''
     -ldflags=
        -X ${t}.Version=${version}
-       -X ${t}.Revision=unknown
+       -X ${t}.Revision=${src.rev}
        -X ${t}.Branch=unknown
        -X ${t}.BuildUser=nix@nixpkgs
        -X ${t}.BuildDate=unknown
        -X ${t}.GoVersion=${stdenv.lib.getVersion go}
+  '';
+
+  postInstall = ''
+    mkdir -p $bin/etc/bash_completion.d
+    $NIX_BUILD_TOP/go/bin/amtool --completion-script-bash > $bin/etc/bash_completion.d/amtool_completion.sh
   '';
 
   meta = with stdenv.lib; {

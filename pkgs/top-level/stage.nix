@@ -9,8 +9,30 @@
    import `pkgs/default.nix` or `default.nix`. */
 
 
-{ # The system (e.g., `i686-linux') for which to build the packages.
-  system
+{ ## Misc parameters kept the same for all stages
+  ##
+
+  # Utility functions, could just import but passing in for efficiency
+  lib
+
+, # Use to reevaluate Nixpkgs; a dirty hack that should be removed
+  nixpkgsFun
+
+  ## Other parameters
+  ##
+
+, # The package set used at build-time. If null, `buildPackages` will
+  # be defined internally as the final produced package set itself. This allows
+  # us to avoid expensive splicing.
+  buildPackages
+
+, # The package set used in the next stage. If null, `targetPackages` will be
+  # defined internally as the final produced package set itself, just like with
+  # `buildPackages` and for the same reasons.
+  #
+  # THIS IS A HACK for compilers that don't think critically about cross-
+  # compilation. Please do *not* use unless you really know what you are doing.
+  targetPackages
 
 , # The standard environment to use for building packages.
   stdenv
@@ -18,22 +40,22 @@
 , # This is used because stdenv replacement and the stdenvCross do benefit from
   # the overridden configuration provided by the user, as opposed to the normal
   # bootstrapping stdenvs.
-  allowCustomOverrides ? true
+  allowCustomOverrides
 
 , # Non-GNU/Linux OSes are currently "impure" platforms, with their libc
-  # outside of the store.  Thus, GCC, GFortran, & co. must always look for
-  # files in standard system directories (/usr/include, etc.)
-  noSysDirs ? (system != "x86_64-freebsd" && system != "i686-freebsd"
-               && system != "x86_64-solaris"
-               && system != "x86_64-kfreebsd-gnu")
+  # outside of the store.  Thus, GCC, GFortran, & co. must always look for files
+  # in standard system directories (/usr/include, etc.)
+  noSysDirs ? stdenv.buildPlatform.system != "x86_64-freebsd"
+           && stdenv.buildPlatform.system != "i686-freebsd"
+           && stdenv.buildPlatform.system != "x86_64-solaris"
+           && stdenv.buildPlatform.system != "x86_64-kfreebsd-gnu"
 
 , # The configuration attribute set
   config
 
-, crossSystem
-, platform
-, lib
-, nixpkgsFun
+, # A list of overlays (Additional `self: super: { .. }` customization
+  # functions) to be fixed together in the produced package set
+  overlays
 }:
 
 let
@@ -47,27 +69,41 @@ let
       inherit lib; inherit (self) stdenv stdenvNoCC; inherit (self.xorg) lndir;
     };
 
-  stdenvDefault = self: super:
-    { stdenv = stdenv // { inherit platform; }; };
+  stdenvBootstappingAndPlatforms = self: super: {
+    buildPackages = (if buildPackages == null then self else buildPackages)
+      // { recurseForDerivations = false; };
+    targetPackages = (if targetPackages == null then self else targetPackages)
+      // { recurseForDerivations = false; };
+    inherit stdenv;
+  };
+
+  # The old identifiers for cross-compiling. These should eventually be removed,
+  # and the packages that rely on them refactored accordingly.
+  platformCompat = self: super: let
+    inherit (super.stdenv) buildPlatform hostPlatform targetPlatform;
+  in {
+    stdenv = super.stdenv // {
+      inherit (super.stdenv.buildPlatform) platform;
+    };
+    inherit buildPlatform hostPlatform targetPlatform;
+    inherit (buildPlatform) system platform;
+  };
+
+  splice = self: super: import ./splice.nix lib self (buildPackages != null);
 
   allPackages = self: super:
     let res = import ./all-packages.nix
-      { inherit system noSysDirs config crossSystem platform lib nixpkgsFun; }
+      { inherit lib nixpkgsFun noSysDirs config; }
       res self;
     in res;
 
   aliases = self: super: import ./aliases.nix super;
 
-  # stdenvOverrides is used to avoid circular dependencies for building
-  # the standard build environment. This mechanism uses the override
-  # mechanism to implement some staged compilation of the stdenv.
-  #
-  # We don't want stdenv overrides in the case of cross-building, or
-  # otherwise the basic overridden packages will not be built with the
-  # crossStdenv adapter.
+  # stdenvOverrides is used to avoid having multiple of versions
+  # of certain dependencies that were used in bootstrapping the
+  # standard environment.
   stdenvOverrides = self: super:
-    lib.optionalAttrs (crossSystem == null && super.stdenv ? overrides)
-      (super.stdenv.overrides super);
+    (super.stdenv.overrides or (_: _: {})) self super;
 
   # Allow packages to be overridden globally via the `packageOverrides'
   # configuration option, which must be a function that takes `pkgs'
@@ -80,29 +116,21 @@ let
     lib.optionalAttrs allowCustomOverrides
       ((config.packageOverrides or (super: {})) super);
 
-  # The complete chain of package set builders, applied from top to bottom
-  toFix = lib.foldl' (lib.flip lib.extends) (self: {}) [
-    stdenvDefault
+  # The complete chain of package set builders, applied from top to bottom.
+  # stdenvOverlays must be last as it brings package forward from the
+  # previous bootstrapping phases which have already been overlayed.
+  toFix = lib.foldl' (lib.flip lib.extends) (self: {}) ([
+    stdenvBootstappingAndPlatforms
+    platformCompat
     stdenvAdapters
     trivialBuilders
+    splice
     allPackages
     aliases
-    stdenvOverrides
     configOverrides
-  ];
+  ] ++ overlays ++ [
+    stdenvOverrides ]);
 
-  # Use `overridePackages` to easily override this package set.
-  # Warning: this function is very expensive and must not be used
-  # from within the nixpkgs repository.
-  #
-  # Example:
-  #  pkgs.overridePackages (self: super: {
-  #    foo = super.foo.override { ... };
-  #  }
-  #
-  # The result is `pkgs' where all the derivations depending on `foo'
-  # will use the new version.
-
-  # Return the complete set of packages. Warning: this function is very
-  # expensive!
-in lib.makeExtensibleWithCustomName "overridePackages" toFix
+in
+  # Return the complete set of packages.
+  lib.fix toFix

@@ -29,7 +29,7 @@ in
         type = types.package;
         default = pkgs.tomcat85;
         defaultText = "pkgs.tomcat85";
-        example = lib.literalExample "pkgs.tomcatUnstable";
+        example = lib.literalExample "pkgs.tomcat9";
         description = ''
           Which tomcat package to use.
         '';
@@ -79,7 +79,7 @@ in
       webapps = mkOption {
         type = types.listOf types.package;
         default = [ tomcat.webapps ];
-        defaultText = "[ tomcat.webapps ]";
+        defaultText = "[ pkgs.tomcat85.webapps ]";
         description = "List containing WAR files or directories with WAR files which are web applications to be deployed on Tomcat";
       };
 

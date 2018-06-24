@@ -35,6 +35,7 @@ let
 
       name = mkOption {
         type = types.str;
+        apply = x: assert (builtins.stringLength x < 32 || abort "Username '${x}' is longer than 31 characters which is not allowed!"); x;
         description = ''
           The name of the user account. If undefined, the name of the
           attribute set will be used.
@@ -91,6 +92,7 @@ let
 
       group = mkOption {
         type = types.str;
+        apply = x: assert (builtins.stringLength x < 32 || abort "Group name '${x}' is longer than 31 characters which is not allowed!"); x;
         default = "nogroup";
         description = "The user's primary group.";
       };
@@ -241,6 +243,17 @@ let
           is world-readable in the Nix store, so it should only be
           used for guest accounts or passwords that will be changed
           promptly.
+        '';
+      };
+
+      packages = mkOption {
+        type = types.listOf types.package;
+        default = [];
+        example = literalExample "[ pkgs.firefox pkgs.thunderbird ]";
+        description = ''
+          The set of packages that should be made availabe to the user.
+          This is in contrast to <option>environment.systemPackages</option>,
+          which adds packages to all users.
         '';
       };
 
@@ -516,8 +529,11 @@ in {
       input.gid = ids.gids.input;
     };
 
-    system.activationScripts.users = stringAfter [ "etc" ]
+    system.activationScripts.users = stringAfter [ "stdio" ]
       ''
+        install -m 0700 -d /root
+        install -m 0755 -d /home
+
         ${pkgs.perl}/bin/perl -w \
           -I${pkgs.perlPackages.FileSlurp}/lib/perl5/site_perl \
           -I${pkgs.perlPackages.JSON}/lib/perl5/site_perl \
@@ -568,5 +584,19 @@ in {
   imports =
     [ (mkAliasOptionModule [ "users" "extraUsers" ] [ "users" "users" ])
       (mkAliasOptionModule [ "users" "extraGroups" ] [ "users" "groups" ])
+      {
+        environment = {
+          etc = mapAttrs' (name: { packages, ... }: {
+            name = "profiles/per-user/${name}";
+            value.source = pkgs.buildEnv {
+              name = "user-environment";
+              paths = packages;
+              inherit (config.environment) pathsToLink extraOutputsToInstall;
+              inherit (config.system.path) ignoreCollisions postBuild;
+            };
+          }) (filterAttrs (_: { packages, ... }: packages != []) cfg.users);
+          profiles = ["/etc/profiles/per-user/$USER"];
+        };
+      }
     ];
 }

@@ -16,13 +16,15 @@ stdenv.mkDerivation {
 
   postInstall = ''
     ln -s $out/bin/wish* $out/bin/wish
+    cp ../{unix,generic}/*.h $out/include
   '';
 
   configureFlags = [
     "--with-tcl=${tcl}/lib"
   ];
 
-  buildInputs = [ pkgconfig ]
+  nativeBuildInputs = [ pkgconfig ];
+  buildInputs = [ ]
     ++ stdenv.lib.optional stdenv.isDarwin fontconfig;
 
   propagatedBuildInputs = [ tcl libXft ];
