@@ -115,12 +115,14 @@ let
         };
 
         mysql = {
-          configureFlags = ["--with-mysql${if mysqlndSupport then "=mysqlnd" else ""}"];
+          configureFlags = ["--with-mysql${if mysqlndSupport then "=mysqlnd" else ""}"
+                            "--with-mysql-sock=/run/mysqld/mysqld.sock"];
           buildInputs = mysqlBuildInputs;
         };
 
         mysqli = {
-          configureFlags = ["--with-mysqli=${if mysqlndSupport then "mysqlnd" else "${mysql.connector-c}/bin/mysql_config"}"];
+          configureFlags = ["--with-mysqli=${if mysqlndSupport then "mysqlnd" else "${mysql.connector-c}/bin/mysql_config"}"
+                            "--with-mysql-sock=/run/mysqld/mysqld.sock"];
           buildInputs = mysqlBuildInputs;
         };
 
@@ -131,7 +133,8 @@ let
         };
 
         pdo_mysql = {
-          configureFlags = ["--with-pdo-mysql=${if mysqlndSupport then "mysqlnd" else mysql.connector-c}"];
+          configureFlags = ["--with-pdo-mysql=${if mysqlndSupport then "mysqlnd" else mysql.connector-c}"
+                            "--with-mysql-sock=/run/mysqld/mysqld.sock"];
           buildInputs = mysqlBuildInputs;
         };
 
@@ -338,22 +341,22 @@ let
 
 in {
   php56 = generic {
-    version = "5.6.36";
-    sha256 = "0ahp9vk33dpsqgld0gg4npff67v0l39hs3wk5dm6h3lablzhwsk2";
+    version = "5.6.38";
+    sha256 = "00xw7rcq36dlrzgx9nr96jc64gnnrxjxkkpmkr1y8fynpldj6nyn";
   };
 
   php70 = generic {
-    version = "7.0.30";
-    sha256 = "0l0bhnlgxmfl7mrdykmxfl53simxsksdcnbg5ymqz6r31i03hgr1";
+    version = "7.0.32";
+    sha256 = "1qcjch3293h3fwci767x9rih3nrvz02rhn33hvx8l5q8kk7xis2n";
   };
 
   php71 = generic {
-    version = "7.1.19";
-    sha256 = "1wvhsxzmb78pcr36ginz93iv7rcrxp3p01rb34zxa2h4wdxkxi0k";
+    version = "7.1.21";
+    sha256 = "104mn4kppklb21hgz1a50kgmc0ak5y996sx990xpc8yy9dbrqh62";
   };
 
   php72 = generic {
-    version = "7.2.7";
-    sha256 = "18ymjqy8vpmwlzzfrxvaz2nsn8n66rmg40pwiy6x2kdgjrd6g0fc";
+    version = "7.2.8";
+    sha256 = "1rky321gcvjm0npbfd4bznh36an0y14viqcvn4yzy3x643sni00z";
   };
 }

@@ -1,4 +1,4 @@
-{ stdenv, ninja, which, nodejs, fetchurl, fetchpatch, gnutar
+{ stdenv, ninja, which, nodejs, fetchurl, fetchpatch, gnutar, callPackage
 
 # default dependencies
 , bzip2, flac, speex, libopus
@@ -40,6 +40,7 @@ with stdenv.lib;
 # see http://www.linuxfromscratch.org/blfs/view/cvs/xsoft/chromium.html
 
 let
+  gn = callPackage ./gn.nix { };
   # The additional attributes for creating derivations based on the chromium
   # source tree.
   extraAttrs = buildFun base;
@@ -143,13 +144,9 @@ let
       # https://git.archlinux.org/svntogit/packages.git/tree/trunk?h=packages/chromium
       # for updated patches and hints about build flags
     # (gentooPatch "<patch>" "0000000000000000000000000000000000000000000000000000000000000000")
-      ./patches/fix-openh264.patch
       ./patches/fix-freetype.patch
-    ]  ++ optionals (versionRange "66" "68") [
-      ./patches/nix_plugin_paths_52.patch
-    ]  ++ optionals (versionAtLeast version "68") [
       ./patches/nix_plugin_paths_68.patch
-      (githubPatch "56cb5f7da1025f6db869e840ed34d3b98b9ab899" "04mp5r1yvdvdx6m12g3lw3z51bzh7m3gr73mhblkn4wxdbvi3dcs")
+      ./patches/remove-webp-include-69.patch
     ] ++ optional enableWideVine ./patches/widevine.patch;
 
     postPatch = ''
@@ -251,15 +248,11 @@ let
     configurePhase = ''
       runHook preConfigure
 
-      # Build gn
-      python tools/gn/bootstrap/bootstrap.py -v -s --no-clean
-      PATH="$PWD/out/Release:$PATH"
-
       # This is to ensure expansion of $out.
       libExecPath="${libExecPath}"
       python build/linux/unbundle/replace_gn_files.py \
         --system-libraries ${toString gnSystemLibraries}
-      gn gen --args=${escapeShellArg gnFlags} out/Release
+      ${gn}/bin/gn gen --args=${escapeShellArg gnFlags} out/Release
 
       runHook postConfigure
     '';

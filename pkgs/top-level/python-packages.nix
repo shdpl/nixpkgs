@@ -4338,6 +4338,10 @@ in {
     };
   };
 
+  fluent-logger = callPackage ../development/python-modules/fluent-logger {};
+
+  python-forecastio = callPackage ../development/python-modules/python-forecastio { };
+
   fpdf = callPackage ../development/python-modules/fpdf { };
 
   fritzconnection = callPackage ../development/python-modules/fritzconnection { };
@@ -8225,13 +8229,13 @@ in {
 
   hetzner = buildPythonPackage rec {
     name = "hetzner-${version}";
-    version = "0.8.0";
+    version = "0.8.1";
 
     src = pkgs.fetchFromGitHub {
       repo = "hetzner";
       owner = "aszlig";
       rev = "v${version}";
-      sha256 = "04q2q2w2qkhfly8rfjg2h5pnh42gs18l6cmipqc37yf7qvkw3nd0";
+      sha256 = "1xd1klvjskv0pg8ginih597jkk491a55b8dq80dsm61m5sbsx3vq";
     };
 
     meta = {
@@ -20466,6 +20470,10 @@ EOF
   h11 = callPackage ../development/python-modules/h11 { };
 
   prometheus_client = callPackage ../development/python-modules/prometheus_client { };
+
+  simpy = callPackage ../development/python-modules/simpy { };
+
+  rfc7464 = callPackage ../development/python-modules/rfc7464 { };
 });
 
 in fix' (extends overrides packages)
