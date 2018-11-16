@@ -15,10 +15,6 @@ buildGoPackage rec {
 
   goDeps = ./deps.nix;
 
-  postInstall = ''
-    rm $bin/bin/generate
-  '';
-
   meta = with stdenv.lib; {
     description = "A fast and modern static website engine.";
     homepage = https://gohugo.io;
