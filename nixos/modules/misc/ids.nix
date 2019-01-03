@@ -329,6 +329,7 @@
       # kvm = 302; # unused
       # render = 303; # unused
       zeronet = 304;
+      bitcoind = 305;
 
       # When adding a uid, make sure it doesn't match an existing gid. And don't use uids above 399!
 
