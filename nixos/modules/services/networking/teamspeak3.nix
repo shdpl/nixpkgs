@@ -118,6 +118,8 @@ in
         chown ${user}:${group} ${cfg.logPath}
       '';
 
+      environment.TS3SERVER_LICENSE = "accept";
+
       serviceConfig = {
         ExecStart = ''
           ${ts3}/bin/ts3server \
