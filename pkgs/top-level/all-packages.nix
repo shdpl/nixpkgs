@@ -583,6 +583,8 @@ with pkgs;
 
   awslogs = callPackage ../tools/admin/awslogs { };
 
+  aws-google-auth = python3Packages.callPackage ../tools/admin/aws-google-auth { };
+
   aws-okta = callPackage ../tools/security/aws-okta { };
 
   aws-rotate-key = callPackage ../tools/admin/aws-rotate-key { };
@@ -2015,15 +2017,6 @@ with pkgs;
     ldapSupport = true;
     gssSupport = true;
     brotliSupport = true;
-  };
-
-  curl_7_59 = callPackage ../tools/networking/curl/7_59.nix rec {
-    fetchurl = fetchurlBoot;
-    http2Support = true;
-    zlibSupport = true;
-    sslSupport = zlibSupport;
-    scpSupport = zlibSupport && !stdenv.isSunOS && !stdenv.isCygwin;
-    gssSupport = true;
   };
 
   curl = callPackage ../tools/networking/curl rec {
@@ -5497,7 +5490,7 @@ with pkgs;
 
   ted = callPackage ../tools/typesetting/ted { };
 
-  teamviewer = libsForQt5.callPackage ../applications/networking/remote/teamviewer { };
+  teamviewer = libsForQt56.callPackage ../applications/networking/remote/teamviewer { };
 
   telegraf = callPackage ../servers/monitoring/telegraf { };
 
@@ -6949,11 +6942,17 @@ with pkgs;
 
   oraclejdk8distro = installjdk: pluginSupport:
     (if pluginSupport then appendToName "with-plugin" else x: x)
-      (callPackage ../development/compilers/oraclejdk/jdk8cpu-linux.nix { inherit installjdk pluginSupport; });
+      (callPackage ../development/compilers/oraclejdk/jdk8cpu-linux.nix {
+        inherit installjdk pluginSupport;
+        licenseAccepted = config.oraclejdk.accept_license or false;
+      });
 
   oraclejdk8psu_distro = installjdk: pluginSupport:
     (if pluginSupport then appendToName "with-plugin" else x: x)
-      (callPackage ../development/compilers/oraclejdk/jdk8psu-linux.nix { inherit installjdk pluginSupport; });
+      (callPackage ../development/compilers/oraclejdk/jdk8psu-linux.nix {
+        inherit installjdk pluginSupport;
+        licenseAccepted = config.oraclejdk.accept_license or false;
+      });
 
   oraclejdk10distro = packageType: _:
       (callPackage ../development/compilers/oraclejdk/jdk10-linux.nix { inherit packageType; });
@@ -7229,10 +7228,12 @@ with pkgs;
     });
   inherit (rust) cargo rustc;
 
-  rust_1_29 = callPackage ../development/compilers/rust/1.29
-    (stdenv.lib.optionalAttrs (stdenv.cc.isGNU && stdenv.hostPlatform.isi686) {
-      stdenv = overrideCC stdenv gcc6; # with gcc-7: undefined reference to `__divmoddi4'
-    });
+  rust_1_31 = callPackage ../development/compilers/rust/1.31 ({
+    inherit (darwin.apple_sdk.frameworks) CoreFoundation Security;
+    llvm = llvm_7;
+  } // stdenv.lib.optionalAttrs (stdenv.cc.isGNU && stdenv.hostPlatform.isi686) {
+    stdenv = overrideCC stdenv gcc6; # with gcc-7: undefined reference to `__divmoddi4'
+  });
 
   buildRustCrate = callPackage ../build-support/rust/build-rust-crate.nix { };
 
@@ -7993,6 +7994,8 @@ with pkgs;
   awf = callPackage ../development/tools/misc/awf { };
 
   electron = callPackage ../development/tools/electron { };
+
+  electron_3 = callPackage ../development/tools/electron/3.x.nix { };
 
   autobuild = callPackage ../development/tools/misc/autobuild { };
 
@@ -9993,6 +9996,11 @@ with pkgs;
     }));
   icu60 = callPackage ../development/libraries/icu/60.nix ({
     nativeBuildRoot = buildPackages.icu60.override { buildRootOnly = true; };
+  } // (stdenv.lib.optionalAttrs (stdenv.cc.isGNU && stdenv.hostPlatform.isi686) {
+      stdenv = overrideCC stdenv gcc6; # with gcc-7: undefined reference to `__divmoddi4'
+    }));
+  icu63 = callPackage ../development/libraries/icu/63.nix ({
+    nativeBuildRoot = buildPackages.icu63.override { buildRootOnly = true; };
   } // (stdenv.lib.optionalAttrs (stdenv.cc.isGNU && stdenv.hostPlatform.isi686) {
       stdenv = overrideCC stdenv gcc6; # with gcc-7: undefined reference to `__divmoddi4'
     }));
@@ -14111,6 +14119,7 @@ with pkgs;
         # when adding a new linux version
         # kernelPatches.cpu-cgroup-v2."4.11"
         kernelPatches.modinst_arg_list_too_long
+        kernelPatches.raspberry_pi_wifi_fix
       ];
   };
 
@@ -16555,7 +16564,7 @@ with pkgs;
       libpng = libpng_apng;
       python = python2;
       gnused = gnused_422;
-      icu = icu59;
+      icu = icu63;
       inherit (darwin.apple_sdk.frameworks) CoreMedia ExceptionHandling
                                             Kerberos AVFoundation MediaToolbox
                                             CoreLocation Foundation AddressBook;
@@ -17232,9 +17241,9 @@ with pkgs;
 
   inherit (kdeApplications)
     akonadi akregator ark dolphin dragon ffmpegthumbs filelight gwenview k3b
-    kaddressbook kate kcachegrind kcalc kcolorchooser kcontacts kdenlive kdf kdialog keditbookmarks
-    kget kgpg khelpcenter kig kleopatra kmail kmix kolourpaint kompare konsole kpkpass kitinerary
-    kontact korganizer krdc krfb ksystemlog kwalletmanager marble minuet okular spectacle;
+    kaddressbook kate kcachegrind kcalc kcharselect kcolorchooser kcontacts kdenlive kdf kdialog
+    keditbookmarks kget kgpg khelpcenter kig kleopatra kmail kmix kolourpaint kompare konsole
+    kpkpass kitinerary kontact korganizer krdc krfb ksystemlog ktouch kwalletmanager marble minuet okular spectacle;
 
   okteta = libsForQt5.callPackage ../applications/editors/okteta { };
 
@@ -21721,7 +21730,6 @@ with pkgs;
   inherit (callPackages ../tools/package-management/nix {
       storeDir = config.nix.storeDir or "/nix/store";
       stateDir = config.nix.stateDir or "/nix/var";
-      curl = curl_7_59;
       boehmgc = boehmgc.override { enableLargeConfig = true; };
       })
     nix
