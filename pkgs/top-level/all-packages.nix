@@ -3584,6 +3584,8 @@ with pkgs;
 
   mailcatcher = callPackage ../development/web/mailcatcher { };
 
+  mailcap = callPackage ../data/misc/mailcap { };
+
   makebootfat = callPackage ../tools/misc/makebootfat { };
 
   matrix-synapse = callPackage ../servers/matrix-synapse { };
@@ -6822,6 +6824,10 @@ with pkgs;
   };
 
   go_1_11 = callPackage ../development/compilers/go/1.11.nix {
+    inherit (darwin.apple_sdk.frameworks) Security Foundation;
+  };
+
+  go_1_12 = callPackage ../development/compilers/go/1.12.nix {
     inherit (darwin.apple_sdk.frameworks) Security Foundation;
   };
 
