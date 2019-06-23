@@ -42,15 +42,19 @@ let
     xorg.libXrender
     stdenv.cc.cc
   ]);
+
+  cpuName = stdenv.hostPlatform.parsed.cpu.name;
 in
 
 let result = stdenv.mkDerivation rec {
   name = if sourcePerArch.packageType == "jdk"
-    then "adoptopenjdk-${sourcePerArch.vmType}-bin-${sourcePerArch.version}"
-    else "adoptopenjdk-${sourcePerArch.packageType}-${sourcePerArch.vmType}-bin-${sourcePerArch.version}";
+    then "adoptopenjdk-${sourcePerArch.vmType}-bin-${version}"
+    else "adoptopenjdk-${sourcePerArch.packageType}-${sourcePerArch.vmType}-bin-${version}";
+
+  version = sourcePerArch.${cpuName}.version or (throw "unsupported CPU ${cpuName}");
 
   src = fetchurl {
-    inherit (sourcePerArch.${stdenv.hostPlatform.parsed.cpu.name}) url sha256;
+    inherit (sourcePerArch.${cpuName}) url sha256;
   };
 
   nativeBuildInputs = [ file ];
@@ -75,6 +79,10 @@ let result = stdenv.mkDerivation rec {
 
     # Remove some broken manpages.
     rm -rf $out/man/ja*
+
+    # Remove embedded freetype to avoid problems like
+    # https://github.com/NixOS/nixpkgs/issues/57733
+    rm $out/lib/libfreetype.so
 
     # for backward compatibility
     ln -s $out $out/jre

@@ -1,4 +1,4 @@
-{ stdenv, lib, fetchurl, perl, pkgconfig, systemd, openssl
+{ stdenv, lib, fetchurl, fetchpatch, perl, pkgconfig, systemd, openssl
 , bzip2, zlib, lz4, inotify-tools, pam, libcap
 , clucene_core_2, icu, openldap, libsodium, libstemmer
 # Auth modules
@@ -8,7 +8,7 @@
 }:
 
 stdenv.mkDerivation rec {
-  name = "dovecot-2.3.2.1";
+  name = "dovecot-2.3.4.1";
 
   nativeBuildInputs = [ perl pkgconfig ];
   buildInputs =
@@ -20,7 +20,7 @@ stdenv.mkDerivation rec {
 
   src = fetchurl {
     url = "https://dovecot.org/releases/2.3/${name}.tar.gz";
-    sha256 = "0d2ffbicgl3wswbnyjbw6qigz7r1aqzprpchbwp5cynw122i2raa";
+    sha256 = "01xa8d08c0j51w5kmqb3vnzrvh17hkzx5a5p7fb5hgn3wln3x1xq";
   };
 
   preConfigure = ''
@@ -47,6 +47,17 @@ stdenv.mkDerivation rec {
     # so we can symlink plugins from several packages there.
     # The symlinking needs to be done in NixOS.
     ./2.2.x-module_dir.patch
+
+    (fetchpatch {
+      name = "CVE-2019-7524.patch";
+      url = https://github.com/dovecot/core/compare/578cf77e84b3d25e2f95f08133a2b0b212aa77cc~1..696320b0f3644e928a9d0c71c063f603c3792dbb.patch;
+      sha256 = "101d757gid0dn3mxqqpa59igkgkq7bwffsklh3nimaav0v2zb018";
+    })
+    (fetchpatch {
+      name = "CVE-2019-10691.patch";
+      url = https://github.com/dovecot/core/commit/973769d74433de3c56c4ffdf4f343cb35d98e4f7.patch;
+      sha256 = "1rp0nfq2qkrx59l6rf8i0v3a8svijmkpnimcpa7vz3b93krk50bp";
+    })
   ];
 
   configureFlags = [

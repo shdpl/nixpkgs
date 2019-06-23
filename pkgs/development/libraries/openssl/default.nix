@@ -15,13 +15,7 @@ let
       inherit sha256;
     };
 
-    patches =
-      (args.patches or [])
-      ++ [ ./nix-ssl-cert-file.patch ]
-      ++ optional (versionOlder version "1.1.0")
-          (if stdenv.hostPlatform.isDarwin then ./use-etc-ssl-certs-darwin.patch else ./use-etc-ssl-certs.patch)
-      ++ optional (versionOlder version "1.0.2" && stdenv.hostPlatform.isDarwin)
-           ./darwin-arch.patch;
+    inherit patches;
 
     postPatch = ''
       patchShebangs Configure
@@ -121,13 +115,21 @@ let
 in {
 
   openssl_1_0_2 = common {
-    version = "1.0.2p";
-    sha256 = "003xh9f898i56344vpvpxxxzmikivxig4xwlm7vbi7m8n43qxaah";
+    version = "1.0.2r";
+    sha256 = "1mnh27zf6r1bhm5d9fxqq9slv2gz0d9z2ij9i679b0wapa5x0ldf";
+    patches = [
+      ./1.0.2/nix-ssl-cert-file.patch
+
+      (if stdenv.hostPlatform.isDarwin
+       then ./1.0.2/use-etc-ssl-certs-darwin.patch
+       else ./1.0.2/use-etc-ssl-certs.patch)
+    ];
   };
 
   openssl_1_1_0 = common {
     version = "1.1.0i";
     sha256 = "16fgaf113p6s5ixw227sycvihh3zx6f6rf0hvjjhxk68m12cigzb";
+    patches = [ ./nix-ssl-cert-file.patch ];
   };
 
 }

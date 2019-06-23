@@ -54,12 +54,20 @@ let
       ./qtbase-revert-no-macos10.10.patch
     ] ++ optionals stdenv.isDarwin [
       ./qtbase-darwin-nseventtype.patch
+      ./qtbase-darwin-revert-69221.patch
     ];
     qtdeclarative = [ ./qtdeclarative.patch ];
     qtscript = [ ./qtscript.patch ];
     qtserialport = [ ./qtserialport.patch ];
     qttools = [ ./qttools.patch ];
-    qtwebengine = optional stdenv.needsPax ./qtwebengine-paxmark-mksnapshot.patch;
+    qtwebengine = [ ./qtwebengine-no-build-skip.patch ]
+      ++ optional stdenv.needsPax ./qtwebengine-paxmark-mksnapshot.patch
+      ++ optional stdenv.cc.isClang ./qtwebengine-clang-fix.patch
+      ++ optionals stdenv.isDarwin [
+        ./qtwebengine-darwin-no-platform-check.patch
+        ./qtwebengine-darwin-sdk-10.10.patch
+        ./qtwebengine-darwin-old-sdk.patch
+      ];
     qtwebkit = [ ./qtwebkit.patch ];
   };
 

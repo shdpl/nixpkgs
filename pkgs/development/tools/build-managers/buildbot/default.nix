@@ -1,4 +1,4 @@
-{ stdenv, openssh, buildbot-worker, buildbot-pkg, pythonPackages, runCommand, makeWrapper }:
+{ stdenv, fetchpatch, openssh, buildbot-worker, buildbot-pkg, pythonPackages, runCommand, makeWrapper }:
 
 let
   withPlugins = plugins: runCommand "wrapped-${package.name}" {
@@ -12,13 +12,12 @@ let
   '';
 
   package = pythonPackages.buildPythonApplication rec {
-    name = "${pname}-${version}";
     pname = "buildbot";
-    version = "1.2.0";
+    version = "1.4.0";
 
     src = pythonPackages.fetchPypi {
       inherit pname version;
-      sha256 = "02gwmls8kgm6scy36hdy0bg645zs1pxlrgwkcn79wrl7cfmabcbv";
+      sha256 = "0dfa926nh642i3bnpzlz0q347zicyx6wswjfqbniri59ya64fncx";
     };
 
     buildInputs = with pythonPackages; [
@@ -74,6 +73,15 @@ let
       # This patch disables the test that tries to read /etc/os-release which
       # is not accessible in sandboxed builds.
       ./skip_test_linux_distro.patch
+
+      # CVE-2019-7313
+      # https://github.com/buildbot/buildbot/wiki/CRLF-injection-in-Buildbot-login-and-logout-redirect-code
+      # https://github.com/buildbot/buildbot/compare/v1.8.0...v1.8.1
+      (fetchpatch {
+        url = "https://github.com/buildbot/buildbot/commit/bdae9fea4e8978b19e12425776b2d083febd91a6.diff";
+        sha256 = "18fbcbqphs8jjmfvjjcbcnv5wj87mj6jv9lmx17lfhpi5hg2axph";
+        stripLen = 1;
+      })
     ];
 
     # TimeoutErrors on slow machines -> aarch64
