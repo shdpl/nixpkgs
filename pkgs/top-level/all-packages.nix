@@ -3720,7 +3720,7 @@ in
     inherit (darwin.apple_sdk.frameworks) AVFoundation AudioToolbox ImageIO CoreMedia Foundation CoreGraphics MediaToolbox;
   };
 
-  kbfs = callPackage ../tools/security/kbfs { };
+  kbfs = callPackage ../tools/security/keybase/kbfs.nix { };
 
   keybase-gui = callPackage ../tools/security/keybase/gui.nix { };
 
@@ -4238,6 +4238,8 @@ in
   memtier-benchmark = callPackage ../tools/networking/memtier-benchmark { };
 
   memtest86 = callPackage ../tools/misc/memtest86 { };
+
+  memtest86-efi = callPackage ../tools/misc/memtest86-efi { };
 
   memtest86plus = callPackage ../tools/misc/memtest86+ { };
 
@@ -7597,6 +7599,15 @@ in
   });
   inherit (rust) cargo rustc;
 
+  rust_1_35 = callPackage ../development/compilers/rust-1_35 ({
+    inherit (darwin.apple_sdk.frameworks) CoreFoundation Security;
+    llvm = llvm_7;
+  } // stdenv.lib.optionalAttrs (stdenv.cc.isGNU && stdenv.hostPlatform.isi686) {
+    stdenv = overrideCC stdenv gcc6; # with gcc-7: undefined reference to `__divmoddi4'
+  });
+  cargo_1_35 = rust_1_35.cargo;
+  rustc_1_35 = rust_1_35.rustc;
+
   buildRustCrate = callPackage ../build-support/rust/build-rust-crate { };
   buildRustCrateHelpers = callPackage ../build-support/rust/build-rust-crate/helpers.nix { };
   buildRustCrateTests = recurseIntoAttrs (callPackage ../build-support/rust/build-rust-crate/test { }).tests;
@@ -7617,6 +7628,7 @@ in
   cargo-download = callPackage ../tools/package-management/cargo-download { };
   cargo-edit = callPackage ../tools/package-management/cargo-edit { };
   cargo-graph = callPackage ../tools/package-management/cargo-graph { };
+  cargo-license = callPackage ../tools/package-management/cargo-license { };
   cargo-release = callPackage ../tools/package-management/cargo-release {
     inherit (darwin.apple_sdk.frameworks) Security;
   };
@@ -8553,9 +8565,9 @@ in
   #     };
   # You can use a different directory, but whichever directory you choose
   # should be owned by user root, group nixbld with permissions 0770.
-  ccacheWrapper = makeOverridable ({ extraConfig ? "" }:
-     wrapCC (ccache.links extraConfig)) {};
-  ccacheStdenv = lowPrio (overrideCC stdenv ccacheWrapper);
+  ccacheWrapper = makeOverridable ({ extraConfig ? "", unwrappedCC ? stdenv.cc.cc }:
+     wrapCC (ccache.links {inherit unwrappedCC extraConfig;})) {};
+  ccacheStdenv = lowPrio (overrideCC stdenv buildPackages.ccacheWrapper);
 
   cccc = callPackage ../development/tools/analysis/cccc { };
 
@@ -11059,6 +11071,8 @@ in
 
   libguestfs-appliance = callPackage ../development/libraries/libguestfs/appliance.nix {};
   libguestfs = callPackage ../development/libraries/libguestfs { };
+  libguestfs-with-appliance = libguestfs.override { appliance = libguestfs-appliance; };
+
 
   libhangul = callPackage ../development/libraries/libhangul { };
 
@@ -14719,17 +14733,11 @@ in
         # when adding a new linux version
         kernelPatches.cpu-cgroup-v2."4.11"
         kernelPatches.modinst_arg_list_too_long
+        kernelPatches.export_kernel_fpu_functions
       ];
   };
 
   linux_4_19 = callPackage ../os-specific/linux/kernel/linux-4.19.nix {
-    kernelPatches =
-      [ kernelPatches.bridge_stp_helper
-        kernelPatches.modinst_arg_list_too_long
-      ];
-  };
-
-  linux_5_0 = callPackage ../os-specific/linux/kernel/linux-5.0.nix {
     kernelPatches =
       [ kernelPatches.bridge_stp_helper
         kernelPatches.modinst_arg_list_too_long
@@ -14938,7 +14946,6 @@ in
   linuxPackages_4_9 = recurseIntoAttrs (linuxPackagesFor pkgs.linux_4_9);
   linuxPackages_4_14 = recurseIntoAttrs (linuxPackagesFor pkgs.linux_4_14);
   linuxPackages_4_19 = recurseIntoAttrs (linuxPackagesFor pkgs.linux_4_19);
-  linuxPackages_5_0 = recurseIntoAttrs (linuxPackagesFor pkgs.linux_5_0);
   linuxPackages_5_1 = recurseIntoAttrs (linuxPackagesFor pkgs.linux_5_1);
 
   # When adding to this list:
@@ -17346,6 +17353,7 @@ in
   firefox-unwrapped = firefoxPackages.firefox;
   firefox-esr-52-unwrapped = firefoxPackages.firefox-esr-52;
   firefox-esr-60-unwrapped = firefoxPackages.firefox-esr-60;
+  firefox-esr-68-unwrapped = firefoxPackages.firefox-esr-68;
   tor-browser-unwrapped = firefoxPackages.tor-browser;
   icecat-unwrapped = firefoxPackages.icecat;
 
@@ -17353,7 +17361,8 @@ in
   firefox-wayland = wrapFirefox firefox-unwrapped { gdkWayland = true; };
   firefox-esr-52 = wrapFirefox firefox-esr-52-unwrapped { };
   firefox-esr-60 = wrapFirefox firefox-esr-60-unwrapped { };
-  firefox-esr = firefox-esr-60;
+  firefox-esr-68 = wrapFirefox firefox-esr-68-unwrapped { };
+  firefox-esr = firefox-esr-68;
   icecat = wrapFirefox icecat-unwrapped { };
 
   firefox-bin-unwrapped = callPackage ../applications/networking/browsers/firefox-bin {
