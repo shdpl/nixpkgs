@@ -1,7 +1,7 @@
 { stdenv, buildGoPackage, fetchFromGitHub }:
 
 buildGoPackage rec {
-  version = "2.14.2";
+  version = "2.13.1";
   name = "helm-${version}";
 
   src = fetchFromGitHub {
