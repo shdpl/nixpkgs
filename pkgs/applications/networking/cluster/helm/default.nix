@@ -1,8 +1,8 @@
 { stdenv, buildGoPackage, fetchFromGitHub }:
 
 buildGoPackage rec {
-  version = "2.14.2";
-  pname = "helm";
+  version = "2.13.1";
+  name = "helm-${version}";
 
   src = fetchFromGitHub {
     owner = "helm";

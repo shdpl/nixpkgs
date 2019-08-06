@@ -19024,6 +19024,8 @@ in
 
   kubernetes-helm = callPackage ../applications/networking/cluster/helm { };
 
+  kubevirt = callPackage ../applications/networking/cluster/kubevirt { };
+
   kubetail = callPackage ../applications/networking/cluster/kubetail { } ;
 
   kupfer = callPackage ../applications/misc/kupfer {
