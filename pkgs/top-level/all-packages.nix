@@ -18130,7 +18130,7 @@ in
 
   kubeval = callPackage ../applications/networking/cluster/kubeval { };
 
-  kubernetes = callPackage ../applications/networking/cluster/kubernetes { };
+  kubernetes = callPackage ../applications/networking/cluster/kubernetes { go = go_1_12; };
 
   kubectl = callPackage ../applications/networking/cluster/kubectl { };
 
