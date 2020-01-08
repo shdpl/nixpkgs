@@ -17,15 +17,19 @@ let
       };
   };
 in buildGoPackage rec {
-  version = "1.67.0";
+  version = "a4b6c71d4b7c1588587345e2dfe0c6bd7cc63a83";
   pname = "gitaly";
 
   src = fetchFromGitLab {
     owner = "gitlab-org";
     repo = "gitaly";
-    rev = "v${version}";
-    sha256 = "1mj2l15hnxwqmyc8xn79d6qpmpqbqw2ishalr8qvn83nzdsbk8l3";
+    rev = version;
+    sha256 = "1pxmhq1nrc8q2kk83bz5afx14hshqgzqm6j4vgmyjvbmdvgl80wv";
   };
+
+  # Fix a check which assumes that hook files are writeable by their
+  # owner.
+  patches = [ ./fix-executable-check.patch ];
 
   goPackagePath = "gitlab.com/gitlab-org/gitaly";
 
