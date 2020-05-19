@@ -151,6 +151,13 @@ in {
       (if stdenv.hostPlatform.isDarwin
        then ./1.1/use-etc-ssl-certs-darwin.patch
        else ./1.1/use-etc-ssl-certs.patch)
+
+      ./1.1/cve-2019-1551.patch
+      ./1.1/cve-2019-1551-improve.patch
+
+      ./1.1/cve-2020-1967.patch
+      ./1.1/cve-2020-1967-test.patch
+
     ];
     withDocs = true;
   };

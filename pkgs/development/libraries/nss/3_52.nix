@@ -1,11 +1,11 @@
-{ stdenv, fetchurl, nspr_4_24, perl, zlib, sqlite, fixDarwinDylibNames, buildPackages }:
+{ stdenv, fetchurl, nspr_4_25, perl, zlib, sqlite, fixDarwinDylibNames, buildPackages }:
 
 let
   nssPEM = fetchurl {
     url = http://dev.gentoo.org/~polynomial-c/mozilla/nss-3.15.4-pem-support-20140109.patch.xz;
     sha256 = "10ibz6y0hknac15zr6dw4gv9nb5r5z9ym6gq18j3xqx7v7n3vpdw";
   };
-  version = "3.48";
+  version = "3.52";
   underscoreVersion = builtins.replaceStrings ["."] ["_"] version;
 
 in stdenv.mkDerivation rec {
@@ -14,7 +14,7 @@ in stdenv.mkDerivation rec {
 
   src = fetchurl {
     url = "mirror://mozilla/security/nss/releases/NSS_${underscoreVersion}_RTM/src/${pname}-${version}.tar.gz";
-    sha256 = "1b7qs1q7jqhw9dvkdznanzhc5dyq4bwx0biywszy3qx4hqm8571z";
+    sha256 = "0q8m9jf6zgkbhx71myjb7y0gcl5ib3gj6qkl9yvdqpd6vl6fn2ha";
   };
 
   depsBuildBuild = [ buildPackages.stdenv.cc ];
@@ -24,11 +24,15 @@ in stdenv.mkDerivation rec {
   buildInputs = [ zlib sqlite ]
     ++ stdenv.lib.optional stdenv.isDarwin fixDarwinDylibNames;
 
-  propagatedBuildInputs = [ nspr_4_24 ];
+  propagatedBuildInputs = [ nspr_4_25 ];
 
   prePatch = ''
-    # strip the trailing whitespace from the patch line…
-    xz -d < ${nssPEM} | sed -e '/^-DIRS = builtins $/ s/ $//' | patch -p1
+    # strip the trailing whitespace from the patch line and the renamed CKO_NETSCAPE_ enum to CKO_NSS_
+    xz -d < ${nssPEM} | sed \
+       -e '/^-DIRS = builtins $/ s/ $//' \
+       -e 's/CKO_NETSCAPE_/CKO_NSS_/g' \
+       -e 's/CKT_NETSCAPE_/CKT_NSS_/g' \
+       | patch -p1
   '';
 
   patches =
@@ -51,8 +55,8 @@ in stdenv.mkDerivation rec {
   makeFlags = let
     cpu = stdenv.hostPlatform.parsed.cpu.name;
   in [
-    "NSPR_INCLUDE_DIR=${nspr_4_24.dev}/include"
-    "NSPR_LIB_DIR=${nspr_4_24.out}/lib"
+    "NSPR_INCLUDE_DIR=${nspr_4_25.dev}/include"
+    "NSPR_LIB_DIR=${nspr_4_25.out}/lib"
     "NSDISTMODE=copy"
     "BUILD_OPT=1"
     "SOURCE_PREFIX=\$(out)"
@@ -117,10 +121,10 @@ in stdenv.mkDerivation rec {
     (if stdenv.isDarwin
      then ''
        libfile="$out/lib/lib$libname.dylib"
-       DYLD_LIBRARY_PATH=$out/lib:${nspr_4_24.out}/lib \
+       DYLD_LIBRARY_PATH=$out/lib:${nspr_4_25.out}/lib \
      '' else ''
        libfile="$out/lib/lib$libname.so"
-       LD_LIBRARY_PATH=$out/lib:${nspr_4_24.out}/lib \
+       LD_LIBRARY_PATH=$out/lib:${nspr_4_25.out}/lib \
      '') + ''
         ${nss}/bin/shlibsign -v -i "$libfile"
     done
