@@ -1183,7 +1183,7 @@ in
 
   blink = libsForQt5.callPackage ../applications/networking/instant-messengers/blink { };
 
-  blockbook = callPackage ../servers/blockbook { 
+  blockbook = callPackage ../servers/blockbook {
     buildGoPackage = buildGo113Package;
   };
 
@@ -8387,7 +8387,7 @@ in
     buildPackages = buildPackages // { stdenv = gcc8Stdenv; };
   });
 
-  go = go_1_14;
+  go = go_1_15;
 
   go-repo-root = callPackage ../development/tools/go-repo-root { };
 
