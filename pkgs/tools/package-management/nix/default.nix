@@ -208,13 +208,13 @@ in rec {
 
   nixUnstable = lib.lowPrio (callPackage common rec {
     name = "nix-2.4${suffix}";
-    suffix = "pre20210308_1c0e3e4";
+    suffix = "pre20210503_6d2553a";
 
     src = fetchFromGitHub {
       owner = "NixOS";
       repo = "nix";
-      rev = "1c0e3e453d41b869e4ac7e25dc1c00c349a7c411";
-      sha256 = "17killwp42d25f17yq2jida64j7d0ipz6zish78iqi450yrd9wrd";
+      rev = "6d2553ae1496288554e871c530836428f405fd67";
+      sha256 = "sha256-YeSeyOKhBAXHlkzo4mwYr8QIjIP9AgdpJ7YdhqOO2CA=";
     };
 
     inherit storeDir stateDir confDir boehmgc;
