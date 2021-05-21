@@ -11,26 +11,18 @@ let
     else if stdenv.hostPlatform.system == "armv7l-linux" then "armv7l"
     else if stdenv.hostPlatform.system == "aarch64-linux" then "aarch64"
     else throw "ImageMagick is not supported on this platform.";
-
-  cfg = {
-    version = "7.0.11-4";
-    sha256 = "sha256-Dwlt3EdDoRkJKm1gepDC+0QdKEkMVsacZQ7khnxmWto=";
-    patches = [];
-  };
 in
 
-stdenv.mkDerivation {
+stdenv.mkDerivation rec {
   pname = "imagemagick";
-  inherit (cfg) version;
+  version = "7.0.11-12";
 
   src = fetchFromGitHub {
     owner = "ImageMagick";
     repo = "ImageMagick";
-    rev = cfg.version;
-    inherit (cfg) sha256;
+    rev = version;
+    sha256 = "sha256-vTCfpHcja0z/aplcunUDlg/90EbfrR/xQ9bzdG0n2RY=";
   };
-
-  patches = cfg.patches;
 
   outputs = [ "out" "dev" "doc" ]; # bin/ isn't really big
   outputMan = "out"; # it's tiny

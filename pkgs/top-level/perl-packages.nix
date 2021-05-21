@@ -3683,6 +3683,20 @@ let
     };
   };
 
+  CryptArgon2 = perlPackages.buildPerlModule {
+    pname = "Crypt-Argon2";
+    version = "0.010";
+    src = fetchurl {
+      url = "mirror://cpan/authors/id/L/LE/LEONT/Crypt-Argon2-0.010.tar.gz";
+      sha256 = "3ea1c006f10ef66fd417e502a569df15c4cc1c776b084e35639751c41ce6671a";
+    };
+    nativeBuildInputs = [ pkgs.ld-is-cc-hook ];
+    meta = {
+      description = "Perl interface to the Argon2 key derivation functions";
+      license = stdenv.lib.licenses.cc0;
+    };
+  };
+
   CryptBlowfish = buildPerlPackage {
     pname = "Crypt-Blowfish";
     version = "2.14";
@@ -3838,6 +3852,33 @@ let
     propagatedBuildInputs = [ CryptX JSON ];
     meta = {
       description = "JSON Web Token";
+      license = with stdenv.lib.licenses; [ artistic1 gpl1Plus ];
+    };
+  };
+
+  CryptPassphrase = buildPerlPackage {
+    pname = "Crypt-Passphrase";
+    version = "0.003";
+    src = fetchurl {
+      url = "mirror://cpan/authors/id/L/LE/LEONT/Crypt-Passphrase-0.003.tar.gz";
+      sha256 = "685aa090f8179a86d6896212ccf8ccfde7a79cce857199bb14e2277a10d240ad";
+    };
+    meta = {
+      description = "A module for managing passwords in a cryptographically agile manner";
+      license = with stdenv.lib.licenses; [ artistic1 gpl1Plus ];
+    };
+  };
+
+  CryptPassphraseArgon2 = buildPerlPackage {
+    pname = "Crypt-Passphrase-Argon2";
+    version = "0.002";
+    src = fetchurl {
+      url = "mirror://cpan/authors/id/L/LE/LEONT/Crypt-Passphrase-Argon2-0.002.tar.gz";
+      sha256 = "3906ff81697d13804ee21bd5ab78ffb1c4408b4822ce020e92ecf4737ba1f3a8";
+    };
+    propagatedBuildInputs = with perlPackages; [ CryptArgon2 CryptPassphrase ];
+    meta = {
+      description = "An Argon2 encoder for Crypt::Passphrase";
       license = with stdenv.lib.licenses; [ artistic1 gpl1Plus ];
     };
   };
@@ -10075,6 +10116,16 @@ let
       sha256 = "0nl5djf6hs6brnp7qnqvj3xwhj1qnjwcv35ih4yqp2mm9b4jqyfh";
     };
 
+    patches = [
+      # Unfortunately, not every release is uploaded to CPAN so security fixes
+      # would need to be cherry-picked from releases
+      (fetchpatch {
+        name = "CVE-2021-22204.patch";
+        url = "https://salsa.debian.org/perl-team/modules/packages/libimage-exiftool-perl/-/raw/0347501fda93cb8366d6451aedcf258b34fb4a2b/debian/patches/CVE-2021-22204.patch";
+        sha256 = "1fxw32zcssillnv764wsd05lyswn8bbrc90q5cy9aknx0ncgsrxj";
+      })
+    ];
+
     nativeBuildInputs = stdenv.lib.optional stdenv.isDarwin shortenPerlShebang;
     postInstall = stdenv.lib.optionalString stdenv.isDarwin ''
       shortenPerlShebang $out/bin/exiftool
@@ -14290,6 +14341,11 @@ let
       url = "mirror://cpan/authors/id/D/DO/DOUGW/Net-CIDR-Lite-0.21.tar.gz";
       sha256 = "cfa125e8a2aef9259bc3a44e07cbdfb7894b64d22e7c0cee92aee2f5c7915093";
     };
+    patches = [
+      # Fix for security issue: prevent leading zeroes in ipv4 octets
+      # https://blog.urth.org/2021/03/29/security-issues-in-perl-ip-address-distros/
+      ../development/perl-modules/Net-CIDR-Lite-prevent-leading-zeroes-ipv4.patch
+    ];
     meta = {
       description = "Perl extension for merging IPv4 or IPv6 CIDR addresses";
     };
@@ -14539,10 +14595,10 @@ let
 
   NetNetmask = buildPerlPackage {
     pname = "Net-Netmask";
-    version = "1.9104";
+    version = "2.0001";
     src = fetchurl {
-      url = "mirror://cpan/authors/id/J/JM/JMASLAK/Net-Netmask-1.9104.tar.gz";
-      sha256 = "17li2svymz49az35xl6galp4b9qcnb985gzklhikkvkn9da6rz3y";
+      url = "mirror://cpan/authors/id/J/JM/JMASLAK/Net-Netmask-2.0001.tar.gz";
+      sha256 = "0waiix46wv93a5zzjjv7ypdnfdf7lizwrhx12128rcvzcvw6wd8p";
     };
     buildInputs = [ Test2Suite TestUseAllModules ];
     meta = {
@@ -17719,6 +17775,19 @@ let
     src = fetchurl {
       url = "mirror://cpan/authors/id/H/HI/HIO/String-CamelCase-0.04.tar.gz";
       sha256 = "1a8i4yzv586svd0pbxls7642vvmyiwzh4x2xyij8gbnfxsydxhw9";
+    };
+  };
+
+  StringCompareConstantTime = buildPerlPackage {
+    pname = "String-Compare-ConstantTime";
+    version = "0.321";
+    src = fetchurl {
+      url = "mirror://cpan/authors/id/F/FR/FRACTAL/String-Compare-ConstantTime-0.321.tar.gz";
+      sha256 = "0b26ba2b121d8004425d4485d1d46f59001c83763aa26624dff6220d7735d7f7";
+    };
+    meta = {
+      description = "Timing side-channel protected string compare";
+      license = with stdenv.lib.licenses; [ artistic1 gpl1Plus ];
     };
   };
 
