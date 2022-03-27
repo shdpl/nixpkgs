@@ -19198,6 +19198,8 @@ with pkgs;
 
   re2 = callPackage ../development/libraries/re2 { };
 
+  rme = callPackage ../games/opentibia/rme/default.nix { };
+
   qbs = libsForQt5.callPackage ../development/tools/build-managers/qbs { };
 
   qca2 = callPackage ../development/libraries/qca2 { qt = qt4; };
