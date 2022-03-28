@@ -2,8 +2,8 @@
 
 let
   base = callPackage ./generic.nix (_args // {
-    version = "8.0.13";
-    sha256 = "0djqh650clz4fy1zifazf0jq383znksydx23f1s48prrlixrshf2";
+    version = "8.0.17";
+    sha256 = "52811ee2dde71660ca32737a4ac696c24591eb22e846dd8e09ee77122660283f";
   });
 
 in

@@ -18,11 +18,11 @@ let
 in
 stdenv.mkDerivation rec {
   pname   = "keycloak";
-  version = "15.1.0";
+  version = "16.1.0";
 
   src = fetchzip {
     url    = "https://github.com/keycloak/keycloak/releases/download/${version}/keycloak-${version}.zip";
-    sha256 = "0s8nvp1ca30569k1a7glbn2zvvchz35s2r8d08fbs5zjngnz3276";
+    sha256 = "sha256-QVFu3f+mwafoNUttLEVMdoZHMJjjH/TpZAGV7ZvIvh0=";
   };
 
   nativeBuildInputs = [ makeWrapper ];
@@ -50,9 +50,11 @@ stdenv.mkDerivation rec {
       ln -s ${mkModuleXml "com.mysql" "mysql-connector-java.jar"} $module_path/com/mysql/main/module.xml
     ''}
 
-    wrapProgram $out/bin/standalone.sh --set JAVA_HOME ${jre}
-    wrapProgram $out/bin/add-user-keycloak.sh --set JAVA_HOME ${jre}
-    wrapProgram $out/bin/jboss-cli.sh --set JAVA_HOME ${jre}
+    for script in add-user-keycloak.sh add-user.sh domain.sh elytron-tool.sh jboss-cli.sh jconsole.sh jdr.sh standalone.sh wsconsume.sh wsprovide.sh; do
+      wrapProgram $out/bin/$script --set JAVA_HOME ${jre}
+    done
+    wrapProgram $out/bin/kcadm.sh --prefix PATH : ${jre}/bin
+    wrapProgram $out/bin/kcreg.sh --prefix PATH : ${jre}/bin
   '';
 
   passthru.tests = nixosTests.keycloak;

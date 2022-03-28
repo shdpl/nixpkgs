@@ -9,8 +9,8 @@
 , yasm, libGLU, libGL, sqlite, unzip, makeWrapper
 , hunspell, libevent, libstartup_notification
 , libvpx
-, icu69, libpng, glib, pciutils
-, autoconf213, which, gnused, rustPackages
+, icu70, libpng, glib, pciutils
+, autoconf213, which, gnused, rustPackages_1_57
 , rust-cbindgen, nodejs, nasm, fetchpatch
 , gnum4
 , gtk3, wrapGAppsHook
@@ -27,9 +27,8 @@
 , ltoSupport ? (stdenv.isLinux && stdenv.is64bit), overrideCC, buildPackages
 , gssSupport ? true, libkrb5
 , pipewireSupport ? waylandSupport && webrtcSupport, pipewire
-# Workaround: disabled since currently jemalloc causes crashes with LLVM 13.
-# https://bugzilla.mozilla.org/show_bug.cgi?id=1741454
-, jemallocSupport ? false, jemalloc
+# Jemalloc could reduce memory consumption.
+, jemallocSupport ? true, jemalloc
 
 ## privacy-related options
 
@@ -96,7 +95,7 @@ let
             then "/Applications/${binaryNameCapitalized}.app/Contents/MacOS"
             else "/bin";
 
-  inherit (rustPackages) rustc cargo;
+  inherit (rustPackages_1_57) rustc cargo;
 
   # Darwin's stdenv provides the default llvmPackages version, match that since
   # clang LTO on Darwin is broken so the stdenv is not being changed.
@@ -133,7 +132,7 @@ buildStdenv.mkDerivation ({
   ] ++
   lib.optional (lib.versionAtLeast version "86") ./env_var_for_system_dir-ff86.patch ++
   lib.optional (lib.versionAtLeast version "90" && lib.versionOlder version "95") ./no-buildconfig-ffx90.patch ++
-  lib.optional (lib.versionAtLeast version "95") ./no-buildconfig-ffx95.patch ++
+  lib.optional (lib.versionAtLeast version "96") ./no-buildconfig-ffx96.patch ++
   patches;
 
   # Ignore trivial whitespace changes in patches, this fixes compatibility of
@@ -149,9 +148,10 @@ buildStdenv.mkDerivation ({
     xorg.xorgproto
     xorg.libXdamage
     xorg.libXext
+    xorg.libXtst
     libevent libstartup_notification /* cairo */
     libpng glib
-    nasm icu69 libvpx
+    nasm icu70 libvpx
     # >= 66 requires nasm for the AV1 lib dav1d
     # yasm can potentially be removed in future versions
     # https://bugzilla.mozilla.org/show_bug.cgi?id=1501796
@@ -174,6 +174,8 @@ buildStdenv.mkDerivation ({
     rm -rf obj-x86_64-pc-linux-gnu
     substituteInPlace toolkit/xre/glxtest.cpp \
       --replace 'dlopen("libpci.so' 'dlopen("${pciutils}/lib/libpci.so'
+
+    patchShebangs mach
  '';
 
   nativeBuildInputs =
@@ -208,6 +210,9 @@ buildStdenv.mkDerivation ({
     configureScript="$(realpath ./mach) configure"
     export MOZCONFIG=$(pwd)/mozconfig
     export MOZBUILD_STATE_PATH=$(pwd)/mozbuild
+
+    # Set consistent remoting name to ensure wmclass matches with desktop file
+    export MOZ_APP_REMOTINGNAME="${binaryName}"
 
     # Set C flags for Rust's bindgen program. Unlike ordinary C
     # compilation, bindgen does not invoke $CC directly. Instead it

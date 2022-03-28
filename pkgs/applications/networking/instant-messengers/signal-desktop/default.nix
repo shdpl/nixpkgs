@@ -24,7 +24,7 @@ let
 
 in stdenv.mkDerivation rec {
   pname = "signal-desktop";
-  version = "5.26.1"; # Please backport all updates to the stable channel.
+  version = "5.36.0"; # Please backport all updates to the stable channel.
   # All releases have a limited lifetime and "expire" 90 days after the release.
   # When releases "expire" the application becomes unusable until an update is
   # applied. The expiration date for the current release can be extracted with:
@@ -34,7 +34,7 @@ in stdenv.mkDerivation rec {
 
   src = fetchurl {
     url = "https://updates.signal.org/desktop/apt/pool/main/s/signal-desktop/signal-desktop_${version}_amd64.deb";
-    sha256 = "sha256-QIRt16AHILBNxKPxsOQ0n65W/bbalhXH1fM7KIaXP10=";
+    sha256 = "sha256-x1PUEDq/0B1T14mBs2FuKtcGpJHWOIvHAs8hptpzhZk=";
   };
 
   nativeBuildInputs = [
@@ -113,6 +113,9 @@ in stdenv.mkDerivation rec {
     mkdir -p $out/bin
     ln -s $out/lib/Signal/signal-desktop $out/bin/signal-desktop
 
+    # Create required symlinks:
+    ln -s libGLESv2.so $out/lib/Signal/libGLESv2.so.2
+
     runHook postInstall
   '';
 
@@ -142,7 +145,7 @@ in stdenv.mkDerivation rec {
     homepage    = "https://signal.org/";
     changelog   = "https://github.com/signalapp/Signal-Desktop/releases/tag/v${version}";
     license     = lib.licenses.agpl3Only;
-    maintainers = with lib.maintainers; [ ixmatus primeos equirosa ];
+    maintainers = with lib.maintainers; [ mic92 equirosa ];
     platforms   = [ "x86_64-linux" ];
   };
 }

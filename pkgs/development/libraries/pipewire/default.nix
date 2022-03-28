@@ -1,6 +1,7 @@
 { stdenv
 , lib
 , fetchFromGitLab
+, fetchpatch
 , removeReferencesTo
 , python3
 , meson
@@ -25,6 +26,8 @@
 , webrtc-audio-processing
 , ncurses
 , readline81 # meson can't find <7 as those versions don't have a .pc file
+, lilv
+, openssl
 , makeFontsConf
 , callPackage
 , nixosTests
@@ -62,7 +65,7 @@ let
 
   self = stdenv.mkDerivation rec {
     pname = "pipewire";
-    version = "0.3.40";
+    version = "0.3.42";
 
     outputs = [
       "out"
@@ -80,7 +83,7 @@ let
       owner = "pipewire";
       repo = "pipewire";
       rev = version;
-      sha256 = "sha256-eY6uQa4+sC6yUWhF4IpAgRoppwhHO4s5fIMXOkS0z7A=";
+      sha256 = "sha256-Iyd5snOt+iCT7W0+FlfvhMUZo/gF+zr9JX4HIGVdHto=";
     };
 
     patches = [
@@ -96,6 +99,15 @@ let
       ./0090-pipewire-config-template-paths.patch
       # Place SPA data files in lib output to avoid dependency cycles
       ./0095-spa-data-dir.patch
+      # Fix attempt to put system service units into pkgs.systemd.
+      (fetchpatch {
+        url = "https://gitlab.freedesktop.org/pipewire/pipewire/-/commit/b666edde787b167c6e19b9356257d48007357acc.diff";
+        sha256 = "1pmnyyvrjykr46ld4a5frq3cc739f8h4jwvfj414lyx8c6ybm63s";
+      })
+      (fetchpatch {
+        url = "https://gitlab.freedesktop.org/pipewire/pipewire/-/commit/5054b48c9de655b4b48f7c801cb305d9eb122520.diff";
+        sha256 = "0myhb7h4g7x2nr08dpx8d7nqhsmzp90yanmkvm627r1xxnnr3ivn";
+      })
     ];
 
     nativeBuildInputs = [
@@ -115,7 +127,9 @@ let
       libjack2
       libusb1
       libsndfile
+      lilv
       ncurses
+      openssl
       readline81
       udev
       vulkan-headers
@@ -143,6 +157,7 @@ let
       "-Dlibpulse=${mesonEnable pulseTunnelSupport}"
       "-Davahi=${mesonEnable zeroconfSupport}"
       "-Dgstreamer=${mesonEnable gstreamerSupport}"
+      "-Dsystemd-system-service=enabled"
       "-Dffmpeg=${mesonEnable ffmpegSupport}"
       "-Dbluez5=${mesonEnable bluezSupport}"
       "-Dbluez5-backend-hsp-native=${mesonEnable nativeHspSupport}"
