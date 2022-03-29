@@ -782,7 +782,6 @@ with pkgs;
   useOldCXXAbi = makeSetupHook { } ../build-support/setup-hooks/use-old-cxx-abi.sh;
 
   ical2org = callPackage ../tools/misc/ical2org {};
-
   iconConvTools = callPackage ../build-support/icon-conv-tools {};
 
   validatePkgConfig = makeSetupHook
@@ -18169,6 +18168,8 @@ with pkgs;
   libosmocore = callPackage ../applications/misc/libosmocore { };
 
   libosmscout = libsForQt5.callPackage ../development/libraries/libosmscout { };
+
+  libotbm = callPackage ../games/opentibia/libotbm/default.nix { };
 
   libotr = callPackage ../development/libraries/libotr { };
 
