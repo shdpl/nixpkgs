@@ -30444,6 +30444,8 @@ with pkgs;
 
   openmw-tes3mp = libsForQt5.callPackage ../games/openmw/tes3mp.nix { };
 
+  opentibia-itemeditor = callPackage ../games/opentibia/itemeditor/default.nix { };
+
   portmod = callPackage ../games/portmod { };
 
   tr-patcher = callPackage ../games/tr-patcher { };
