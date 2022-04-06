@@ -1,4 +1,4 @@
-{ lib, callPackage, buildGoModule, fetchFromGitLab, libotbm }:
+{ lib, callPackage, buildGoModule, fetchFromGitLab, libotbm, dmd }:
 buildGoModule {
   name = "opentibia-itemeditor";
 
@@ -10,6 +10,9 @@ buildGoModule {
   };
 
   nativeBuildInputs = [ libotbm ];
+
+  NIX_CFLAGS_COMPILE="-I${libotbm}/include";
+  NIX_CFLAGS_LINK="-L${libotbm}/lib -lotbm -L${dmd}/lib -lphobos2";
 
   vendorSha256 = "sha256:0a2cp4lbirllxkdis1a462qhpmcva62zf8rchs6ra6ndladk48a9";
 
