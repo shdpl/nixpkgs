@@ -730,6 +730,7 @@ with pkgs;
   fetchFromRepoOrCz = callPackage ../build-support/fetchrepoorcz { };
 
   fetchFromRadicle = callPackage ../build-support/fetchradicle { };
+  fetchRadiclePatch = callPackage ../build-support/fetchradiclepatch { };
 
   fetchgx = callPackage ../build-support/fetchgx { };
 
@@ -2372,10 +2373,6 @@ with pkgs;
 
   patool = with python3Packages; toPythonApplication patool;
 
-  pocket-casts = callPackage ../by-name/po/pocket-casts/package.nix {
-    electron = electron_35;
-  };
-
   pixcat = with python3Packages; toPythonApplication pixcat;
 
   pyznap = python3Packages.callPackage ../tools/backup/pyznap { };
@@ -3901,7 +3898,7 @@ with pkgs;
     toPythonApplication (
       nvchecker.overridePythonAttrs (oldAttrs: {
         propagatedBuildInputs =
-          oldAttrs.propagatedBuildInputs ++ lib.flatten (builtins.attrValues oldAttrs.optional-dependencies);
+          oldAttrs.dependencies ++ lib.flatten (builtins.attrValues oldAttrs.optional-dependencies);
       })
     );
 
@@ -4615,11 +4612,6 @@ with pkgs;
   translatelocally-models = recurseIntoAttrs (callPackages ../misc/translatelocally-models { });
 
   translatepy = with python3.pkgs; toPythonApplication translatepy;
-
-  inherit (callPackage ../applications/office/trilium { })
-    trilium-desktop
-    trilium-server
-    ;
 
   trytond = with python3Packages; toPythonApplication trytond;
 
@@ -6053,6 +6045,9 @@ with pkgs;
   rust_1_88 = callPackage ../development/compilers/rust/1_88.nix {
     llvm_20 = llvmPackages_20.libllvm;
   };
+  rust_1_89 = callPackage ../development/compilers/rust/1_89.nix {
+    llvm_20 = llvmPackages_20.libllvm;
+  };
   rust = rust_1_86;
 
   mrustc = callPackage ../development/compilers/mrustc { };
@@ -6063,6 +6058,7 @@ with pkgs;
 
   rustPackages_1_86 = rust_1_86.packages.stable;
   rustPackages_1_88 = rust_1_88.packages.stable;
+  rustPackages_1_89 = rust_1_89.packages.stable;
   rustPackages = rustPackages_1_86;
 
   inherit (rustPackages)
@@ -6980,11 +6976,7 @@ with pkgs;
 
   electron_33 = electron_33-bin;
   electron_34 = electron_34-bin;
-  electron_35 =
-    if lib.meta.availableOn stdenv.hostPlatform electron-source.electron_35 then
-      electron-source.electron_35
-    else
-      electron_35-bin;
+  electron_35 = electron_35-bin;
   electron_36 =
     if lib.meta.availableOn stdenv.hostPlatform electron-source.electron_36 then
       electron-source.electron_36
@@ -7000,9 +6992,9 @@ with pkgs;
       electron-source.electron_38
     else
       electron_38-bin;
-  electron = electron_35;
-  electron-bin = electron_35-bin;
-  electron-chromedriver = electron-chromedriver_35;
+  electron = electron_37;
+  electron-bin = electron_37-bin;
+  electron-chromedriver = electron-chromedriver_37;
 
   autoconf = callPackage ../development/tools/misc/autoconf { };
   autoconf213 = callPackage ../development/tools/misc/autoconf/2.13.nix { };
@@ -9334,14 +9326,11 @@ with pkgs;
   openvdb = callPackage ../development/libraries/openvdb { };
 
   inherit (callPackages ../development/libraries/libressl { })
-    libressl_3_6
-    libressl_3_7
-    libressl_3_8
-    libressl_3_9
     libressl_4_0
+    libressl_4_1
     ;
 
-  libressl = libressl_4_0;
+  libressl = libressl_4_1;
 
   openssl = openssl_3_4;
 
@@ -10025,6 +10014,11 @@ with pkgs;
     go = buildPackages.go_1_24;
   };
 
+  go_1_25 = callPackage ../development/compilers/go/1.25.nix { };
+  buildGo125Module = callPackage ../build-support/go/module.nix {
+    go = buildPackages.go_1_25;
+  };
+
   ### DEVELOPMENT / HARE
 
   hareHook = callPackage ../by-name/ha/hare/hook.nix { };
@@ -10490,6 +10484,10 @@ with pkgs;
 
   kanidm_1_5 = callPackage ../by-name/ka/kanidm/1_5.nix { kanidm = kanidm_1_5; };
   kanidm_1_6 = callPackage ../by-name/ka/kanidm/1_6.nix { kanidm = kanidm_1_6; };
+  kanidm_1_7 = callPackage ../by-name/ka/kanidm/1_7.nix {
+    kanidm = kanidm_1_7;
+    rustPlatform = rustPackages_1_88.rustPlatform;
+  };
 
   kanidmWithSecretProvisioning = kanidmWithSecretProvisioning_1_6;
 
@@ -10499,6 +10497,11 @@ with pkgs;
 
   kanidmWithSecretProvisioning_1_6 = callPackage ../by-name/ka/kanidm/1_6.nix {
     enableSecretProvisioning = true;
+  };
+
+  kanidmWithSecretProvisioning_1_7 = callPackage ../by-name/ka/kanidm/1_7.nix {
+    enableSecretProvisioning = true;
+    rustPlatform = rustPackages_1_88.rustPlatform;
   };
 
   knot-resolver = callPackage ../servers/dns/knot-resolver {
@@ -16988,4 +16991,6 @@ with pkgs;
   rustdesk-flutter = callPackage ../by-name/ru/rustdesk-flutter/package.nix {
     flutter = flutter324;
   };
+
+  vips_8_17 = callPackage ../by-name/vi/vips/8_17.nix { };
 }
