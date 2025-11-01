@@ -3877,10 +3877,12 @@ with pkgs;
   inherit (callPackages ../servers/nextcloud { })
     nextcloud30
     nextcloud31
+    nextcloud32
     ;
 
   nextcloud30Packages = callPackage ../servers/nextcloud/packages { ncVersion = "30"; };
   nextcloud31Packages = callPackage ../servers/nextcloud/packages { ncVersion = "31"; };
+  nextcloud32Packages = callPackage ../servers/nextcloud/packages { ncVersion = "32"; };
 
   nextcloud-notify_push = callPackage ../servers/nextcloud/notify_push.nix { };
 
@@ -10427,7 +10429,9 @@ with pkgs;
 
   glabels-qt = callPackage ../applications/graphics/glabels-qt { };
 
-  grafana = callPackage ../servers/monitoring/grafana { };
+  grafana = callPackage ../servers/monitoring/grafana {
+    buildGoModule = buildGo125Module;
+  };
   grafanaPlugins = callPackages ../servers/monitoring/grafana/plugins { };
 
   hasura-cli = callPackage ../servers/hasura/cli.nix { };
