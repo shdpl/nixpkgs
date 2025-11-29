@@ -2465,10 +2465,6 @@ with pkgs;
     enableExtraPlugins = true;
   };
 
-  asciidoctor = callPackage ../tools/typesetting/asciidoctor { };
-
-  asciidoctor-with-extensions = callPackage ../tools/typesetting/asciidoctor-with-extensions { };
-
   b2sum = callPackage ../tools/security/b2sum {
     inherit (llvmPackages) openmp;
   };
@@ -6967,6 +6963,7 @@ with pkgs;
     electron_36-bin
     electron_37-bin
     electron_38-bin
+    electron_39-bin
     ;
 
   inherit (callPackages ../development/tools/electron/chromedriver { })
@@ -6976,6 +6973,7 @@ with pkgs;
     electron-chromedriver_36
     electron-chromedriver_37
     electron-chromedriver_38
+    electron-chromedriver_39
     ;
 
   electron_33 = electron_33-bin;
@@ -6996,6 +6994,11 @@ with pkgs;
       electron-source.electron_38
     else
       electron_38-bin;
+  electron_39 =
+    if lib.meta.availableOn stdenv.hostPlatform electron-source.electron_39 then
+      electron-source.electron_39
+    else
+      electron_39-bin;
   electron = electron_37;
   electron-bin = electron_37-bin;
   electron-chromedriver = electron-chromedriver_37;
@@ -9941,6 +9944,7 @@ with pkgs;
   apple-sdk_13 = callPackage ../by-name/ap/apple-sdk/package.nix { darwinSdkMajorVersion = "13"; };
   apple-sdk_14 = callPackage ../by-name/ap/apple-sdk/package.nix { darwinSdkMajorVersion = "14"; };
   apple-sdk_15 = callPackage ../by-name/ap/apple-sdk/package.nix { darwinSdkMajorVersion = "15"; };
+  apple-sdk_26 = callPackage ../by-name/ap/apple-sdk/package.nix { darwinSdkMajorVersion = "26"; };
 
   darwinMinVersionHook =
     deploymentTarget:
@@ -14697,6 +14701,7 @@ with pkgs;
   yt-dlp-light = yt-dlp.override {
     atomicparsleySupport = false;
     ffmpegSupport = false;
+    javascriptSupport = false;
     rtmpSupport = false;
   };
 

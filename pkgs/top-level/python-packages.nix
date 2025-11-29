@@ -14882,6 +14882,8 @@ self: super: with self; {
 
   rapidgzip = callPackage ../development/python-modules/rapidgzip { inherit (pkgs) nasm; };
 
+  rapidocr = callPackage ../development/python-modules/rapidocr { };
+
   rapidocr-onnxruntime = callPackage ../development/python-modules/rapidocr-onnxruntime { };
 
   rapt-ble = callPackage ../development/python-modules/rapt-ble { };
@@ -19399,6 +19401,8 @@ self: super: with self; {
   yt-dlp = toPythonModule (pkgs.yt-dlp.override { python3Packages = self; });
 
   yt-dlp-dearrow = callPackage ../development/python-modules/yt-dlp-dearrow { };
+
+  yt-dlp-ejs = callPackage ../development/python-modules/yt-dlp-ejs { };
 
   yt-dlp-light = toPythonModule (pkgs.yt-dlp-light.override { python3Packages = self; });
 

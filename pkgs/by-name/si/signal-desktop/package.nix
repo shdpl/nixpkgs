@@ -3,7 +3,7 @@
   lib,
   nodejs_22,
   pnpm_10,
-  electron_38,
+  electron_39,
   gn_2233,
   python3,
   makeWrapper,
@@ -20,7 +20,7 @@
 let
   nodejs = nodejs_22;
   pnpm = pnpm_10.override { inherit nodejs; };
-  electron = electron_38;
+  electron = electron_39;
   gn = gn_2233;
 
   libsignal-node = callPackage ./libsignal-node.nix { inherit nodejs; };
@@ -50,13 +50,13 @@ let
     '';
   });
 
-  version = "7.76.0";
+  version = "7.80.0";
 
   src = fetchFromGitHub {
     owner = "signalapp";
     repo = "Signal-Desktop";
     tag = "v${version}";
-    hash = "sha256-zwywpQ/1LYSofXPMLtYt7c0PLlzgNedRGqslPJur61g=";
+    hash = "sha256-CU304F6Ib4j/0/BqGUidV9uYUrsvIahpsCYVgr8MWFg=";
   };
 
   sticker-creator = stdenv.mkDerivation (finalAttrs: {
@@ -67,7 +67,7 @@ let
     pnpmDeps = pnpm.fetchDeps {
       inherit (finalAttrs) pname src version;
       fetcherVersion = 1;
-      hash = "sha256-WUwclz7dJl+s5zRjWu/HTJ5eZroAFA6vR8mZzwib6Po=";
+      hash = "sha256-m/JxsKnVhcya7dUz1MBMQKwEdqoV3xQiGOoT4egh3K4=";
     };
 
     strictDeps = true;
@@ -118,7 +118,7 @@ stdenv.mkDerivation (finalAttrs: {
     # resource if the nixpkgs version is different. To fix this we hardcode
     # the electron version to the declared one here instead of interpolating
     # it at runtime.
-    substituteInPlace app/updateDefaultSession.ts \
+    substituteInPlace app/updateDefaultSession.main.ts \
       --replace-fail "\''${process.versions.electron}" "`jq -r '.devDependencies.electron' < package.json`"
   '';
 
@@ -132,15 +132,15 @@ stdenv.mkDerivation (finalAttrs: {
     fetcherVersion = 1;
     hash =
       if withAppleEmojis then
-        "sha256-b13di3TdaS6CT8gAZfBqlu4WheIHL+X8LvAo148H8kI="
+        "sha256-7zw9qmnQt5NYRKI4bLCM5Hg0d/6kVKovy1k8CpZ/1R8="
       else
-        "sha256-/Yy9R+MRN5e5vGU0XgwJa7oFpHn8bi8B0y89aaT2LQI=";
+        "sha256-Mya7v0uhjP4GVyD412SMiQ8/YHaq99fDIjGHCJOIWxY=";
   };
 
   env = {
     ELECTRON_SKIP_BINARY_DOWNLOAD = "1";
     SIGNAL_ENV = "production";
-    SOURCE_DATE_EPOCH = 1761172657;
+    SOURCE_DATE_EPOCH = 1763594452;
   };
 
   preBuild = ''
