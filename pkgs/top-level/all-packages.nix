@@ -8332,6 +8332,8 @@ with pkgs;
 
   pyotherside = libsForQt5.callPackage ../development/libraries/pyotherside { };
 
+  rme = callPackage ../games/opentibia/rme/default.nix { };
+
   qbs = libsForQt5.callPackage ../development/tools/build-managers/qbs { };
 
   qdjango = libsForQt5.callPackage ../development/libraries/qdjango { };
