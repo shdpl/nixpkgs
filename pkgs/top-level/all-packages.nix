@@ -664,6 +664,10 @@ with pkgs;
 
   fetchFromGitea = callPackage ../build-support/fetchgitea { };
 
+  fetchFromForgejo = fetchFromGitea;
+
+  fetchFromCodeberg = callPackage ../build-support/fetchcodeberg { };
+
   fetchFromGitHub = callPackage ../build-support/fetchgithub { };
 
   fetchFromBitbucket = callPackage ../build-support/fetchbitbucket { };
@@ -1490,8 +1494,6 @@ with pkgs;
       appimage-run-tests = null; # break boostrap cycle for passthru.tests
     };
   };
-
-  ArchiSteamFarm = callPackage ../applications/misc/ArchiSteamFarm { };
 
   arduino = arduino-core.override { withGui = true; };
 
@@ -4016,7 +4018,13 @@ with pkgs;
 
   trackma-qt = trackma.override { withQT = true; };
 
-  trezorctl = with python3Packages; toPythonApplication trezor;
+  trezorctl =
+    with python3Packages;
+    toPythonApplication (
+      trezor.overridePythonAttrs (oldAttrs: {
+        dependencies = oldAttrs.dependencies ++ oldAttrs.optional-dependencies.full;
+      })
+    );
 
   trezor-agent = with python3Packages; toPythonApplication trezor-agent;
 
@@ -11060,16 +11068,6 @@ with pkgs;
     pname = "firefox-bin";
   };
 
-  librewolf-unwrapped = import ../applications/networking/browsers/librewolf {
-    inherit
-      stdenv
-      lib
-      callPackage
-      buildMozillaMach
-      nixosTests
-      ;
-  };
-
   librewolf = wrapFirefox librewolf-unwrapped {
     inherit (librewolf-unwrapped) extraPrefsFiles extraPoliciesFiles;
     libName = "librewolf";
@@ -11448,8 +11446,6 @@ with pkgs;
   };
 
   jackmix_jack1 = jackmix.override { jack = jack1; };
-
-  js8call = qt5.callPackage ../applications/radio/js8call { };
 
   jwm = callPackage ../applications/window-managers/jwm { };
 
@@ -14280,6 +14276,10 @@ with pkgs;
           waylandFull
           yabridge
           fonts
+          stable_11
+          stableFull_11
+          staging_11
+          stagingFull_11
           ;
       }
     );
@@ -14292,17 +14292,9 @@ with pkgs;
   wine = winePackages.full;
   wine64 = wine64Packages.full;
 
-  wine-staging = lowPrio (
-    winePackages.full.override {
-      wineRelease = "staging";
-    }
-  );
+  wine-staging = lowPrio winePackages.stagingFull;
 
-  wine-wayland = lowPrio (
-    winePackages.full.override {
-      x11Support = false;
-    }
-  );
+  wine-wayland = lowPrio winePackages.waylandFull;
 
   inherit (callPackage ../servers/web-apps/wordpress { })
     wordpress
