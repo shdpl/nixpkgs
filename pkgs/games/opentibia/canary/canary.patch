@@ -1,0 +1,75 @@
+diff --git a/source/CMakeLists.txt b/source/CMakeLists.txt
+index 149b6f7..a16e63f 100644
+--- a/source/CMakeLists.txt
++++ b/source/CMakeLists.txt
+@@ -8,17 +8,19 @@ else()
+     project(canary-map-editor LANGUAGES CXX)
+ endif()
+ 
+-find_package(asio CONFIG REQUIRED)
++# find_package(asio)
+ find_package(fmt CONFIG REQUIRED)
+ find_package(GLUT REQUIRED)
+ find_package(nlohmann_json CONFIG REQUIRED)
+ find_package(OpenGL REQUIRED)
+ find_package(Threads REQUIRED)
+-find_package(wxWidgets COMPONENTS html aui gl adv core net base CONFIG REQUIRED)
++find_package(wxWidgets COMPONENTS html aui gl adv core net base)
+ find_package(ZLIB REQUIRED)
+ find_package(pugixml CONFIG REQUIRED)
+-find_package(liblzma CONFIG REQUIRED)
+-find_package(Protobuf REQUIRED)
++find_package(LibLZMA)
++find_package(protobuf REQUIRED CONFIG)
++
++# include(${wxWidgets_USE_FILE})
+ 
+ # *****************************************************************************
+ # Options
+@@ -100,6 +102,8 @@ else()
+ endif()
+ 
+ 
++add_library(asio INTERFACE)
++
+ target_sources(${PROJECT_NAME}
+ 	PRIVATE
+ 	about_window.cpp
+@@ -216,6 +220,7 @@ target_include_directories(${PROJECT_NAME}
+ 	${OPENGL_INCLUDE_DIR}
+ 	${GLUT_INCLUDE_DIRS}
+ 	${ZLIB_INCLUDE_DIR}
++	${wxWidgets_INCLUDE_DIRS}
+ )
+ 
+ target_link_libraries(${PROJECT_NAME}
+@@ -224,11 +229,14 @@ target_link_libraries(${PROJECT_NAME}
+ 	${GLUT_LIBRARIES}
+ 	${ZLIB_LIBRARIES}
+ 	fmt::fmt
+-	asio::asio
++	# asio::asio
++	asio
+ 	nlohmann_json::nlohmann_json
+ 	pugixml::pugixml
+-	wx::base wx::core wx::net wx::gl wx::html wx::aui wx::adv
+-	liblzma::liblzma
++	# wx::base wx::core wx::net wx::gl wx::html wx::aui wx::adv
++	${wxWidgets_LIBRARIES}
++	# liblzma::liblzma
++	LibLZMA::LibLZMA
+ 	OpenGL::GL
+ 	protobuf
+ 
+diff --git a/source/net_connection.h b/source/net_connection.h
+index 31b5ae3..909ed49 100644
+--- a/source/net_connection.h
++++ b/source/net_connection.h
+@@ -25,6 +25,7 @@
+ #include <cstdint>
+ #include <thread>
+ #include <mutex>
++#include <asio.hpp>
+ 
+ struct NetworkMessage {
+ 	NetworkMessage();
